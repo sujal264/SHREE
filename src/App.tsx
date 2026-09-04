@@ -1,0 +1,193 @@
+import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { FinanceProvider, useFinance } from './context/FinanceContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { Sidebar } from './components/layout/Sidebar';
+import { Navbar } from './components/layout/Navbar';
+import { DashboardView } from './components/dashboard/DashboardView';
+import { DonationsView } from './components/donations/DonationsView';
+import { ExpensesView } from './components/expenses/ExpensesView';
+import { LedgerView } from './components/ledger/LedgerView';
+import { ReportsView } from './components/reports/ReportsView';
+import { SettingsView } from './components/settings/SettingsView';
+import { DonationModal } from './components/donations/DonationModal';
+import { ExpenseModal } from './components/expenses/ExpenseModal';
+import { ReceiptModal } from './components/receipts/ReceiptModal';
+import { AuthModal } from './components/common/AuthModal';
+import { ToastContainer } from './components/common/ToastContainer';
+import { Donation, Expense } from './types';
+import { X, ShieldAlert } from 'lucide-react';
+
+const MainLayout: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  const { selectedReceiptDonation, closeReceiptModal, activeFestival } = useFinance();
+  const { isAuthModalOpen, closeAuthModal, isAdmin } = useAuth();
+
+  // Donation Modal State
+  const [isDonationModalOpen, setIsDonationModalOpen] = useState<boolean>(false);
+  const [editingDonation, setEditingDonation] = useState<Donation | undefined>(undefined);
+
+  // Expense Modal State
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState<boolean>(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | undefined>(undefined);
+
+  const handleOpenDonationModal = (donation?: Donation) => {
+    setEditingDonation(donation);
+    setIsDonationModalOpen(true);
+  };
+
+  const handleOpenExpenseModal = (expense?: Expense) => {
+    setEditingExpense(expense);
+    setIsExpenseModalOpen(true);
+  };
+
+  const handleSelectTab = (tab: string) => {
+    if (tab === 'settings' && !isAdmin) {
+      setActiveTab('dashboard');
+      setIsMobileMenuOpen(false);
+      return;
+    }
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-100 font-['Mukta',sans-serif] text-slate-900 overflow-hidden">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex">
+        <Sidebar
+          activeTab={activeTab}
+          onSelectTab={handleSelectTab}
+          onOpenDonationModal={() => handleOpenDonationModal()}
+          onOpenExpenseModal={() => handleOpenExpenseModal()}
+        />
+      </div>
+
+      {/* Mobile Drawer Navigation */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div className="relative w-4/5 max-w-xs bg-slate-900 h-full flex flex-col z-10 shadow-2xl">
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <Sidebar
+              activeTab={activeTab}
+              onSelectTab={handleSelectTab}
+              onOpenDonationModal={() => {
+                setIsMobileMenuOpen(false);
+                handleOpenDonationModal();
+              }}
+              onOpenExpenseModal={() => {
+                setIsMobileMenuOpen(false);
+                handleOpenExpenseModal();
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Navbar
+          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onOpenDonationModal={() => handleOpenDonationModal()}
+          onOpenExpenseModal={() => handleOpenExpenseModal()}
+        />
+
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto pb-12">
+            {activeTab === 'dashboard' && (
+              <DashboardView
+                onNavigate={handleSelectTab}
+                onOpenDonationModal={() => handleOpenDonationModal()}
+                onOpenExpenseModal={() => handleOpenExpenseModal()}
+              />
+            )}
+            {activeTab === 'donations' && (
+              <DonationsView onOpenDonationModal={handleOpenDonationModal} />
+            )}
+            {activeTab === 'expenses' && (
+              <ExpensesView onOpenExpenseModal={handleOpenExpenseModal} />
+            )}
+            {activeTab === 'ledger' && <LedgerView />}
+            {activeTab === 'settings' && (
+              isAdmin ? (
+                <SettingsView />
+              ) : (
+                <div className="p-8 text-center bg-white rounded-3xl border border-red-200 shadow-sm max-w-lg mx-auto mt-12 space-y-4">
+                  <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+                    <ShieldAlert className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900">प्रवेश प्रतिबंधित (Access Restricted)</h2>
+                  <p className="text-slate-600 text-sm">
+                    मंडळ सेटिंग्ज केवळ अधिकृत व्यवस्थापकांसाठी (Admin) राखीव आहेत. बदल करण्यासाठी कृपया ॲडमिन म्हणून लॉगिन करा.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl transition-all cursor-pointer"
+                  >
+                    डॅशबोर्डवर परत जा (Return to Dashboard)
+                  </button>
+                </div>
+              )
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* Modals & Portals */}
+      <DonationModal
+        isOpen={isDonationModalOpen}
+        onClose={() => {
+          setIsDonationModalOpen(false);
+          setEditingDonation(undefined);
+        }}
+        initialData={editingDonation}
+      />
+
+      <ExpenseModal
+        isOpen={isExpenseModalOpen}
+        onClose={() => {
+          setIsExpenseModalOpen(false);
+          setEditingExpense(undefined);
+        }}
+        initialData={editingExpense}
+      />
+
+      <ReceiptModal
+        donation={selectedReceiptDonation}
+        festival={activeFestival}
+        onClose={closeReceiptModal}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+      />
+
+      <ToastContainer />
+    </div>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <FinanceProvider>
+        <LanguageProvider>
+          <MainLayout />
+        </LanguageProvider>
+      </FinanceProvider>
+    </AuthProvider>
+  );
+}

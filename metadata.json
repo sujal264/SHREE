@@ -1,0 +1,6 @@
+{
+  "name": "SHREE SAI MITRA MANDAL / श्री साई मित्र मंडळ",
+  "description": "श्री साई मित्र मंडळ - गणेशोत्सव व उत्सव देणगी, जमा-खर्च वही, पावती आणि ताळेबंद व्यवस्थापन प्रणाली (Shree Sai Mitra Mandal Finance & Receipt Management).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

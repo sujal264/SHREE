@@ -1,0 +1,88 @@
+import React from 'react';
+import {
+  Menu,
+  KeyRound,
+  Shield,
+  LogOut,
+} from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+interface NavbarProps {
+  onToggleMobileMenu: () => void;
+  onOpenDonationModal?: () => void;
+  onOpenExpenseModal?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
+  onToggleMobileMenu,
+}) => {
+  const { isAdmin, openAuthModal, logout } = useAuth();
+
+  return (
+    <header className="h-16 bg-white border-b border-amber-200/80 px-3 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-['Mukta',sans-serif]">
+      {/* Left: Mobile hamburger & Mandal Title */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button
+          onClick={onToggleMobileMenu}
+          className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl md:hidden cursor-pointer shrink-0"
+          title="Open Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <img
+          src="/favicon.png"
+          alt="Logo"
+          className="w-9 h-9 rounded-xl object-cover border border-amber-300 shadow-xs shrink-0"
+        />
+
+        <div className="min-w-0 font-['Mukta',sans-serif]">
+          <div className="text-xs sm:text-sm font-black text-amber-950 truncate max-w-[150px] sm:max-w-xs md:max-w-md leading-tight">
+            श्री साई मित्र मंडळ २०२६
+          </div>
+          <div className="text-[10px] sm:text-[11px] text-slate-500 hidden sm:flex items-center gap-1.5 font-medium truncate">
+            <span className="text-amber-800 font-bold">स्थापना: १९९०</span>
+            <span>•</span>
+            <span className="text-red-700 font-extrabold">श्री साई कॉलनी, कर्वेनगर, पुणे</span>
+            <span>•</span>
+            <span className="text-amber-900 font-black bg-amber-100 px-1.5 py-0.2 rounded text-[10px]">वर्ष ३६ वे</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Single Login / Admin Button */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {isAdmin ? (
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <button
+              onClick={openAuthModal}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-amber-100/90 hover:bg-amber-200 text-amber-950 rounded-xl text-xs font-bold border border-amber-300 transition-colors cursor-pointer"
+              title="Admin Session Active"
+            >
+              <Shield className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+              <span className="font-extrabold">Admin</span>
+            </button>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 text-slate-600 rounded-xl text-xs font-bold border border-slate-200 transition-colors cursor-pointer"
+              title="Log Out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            id="navbar-login-btn"
+            onClick={openAuthModal}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer"
+            title="Admin Login"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-amber-200" />
+            <span>Login</span>
+          </button>
+        )}
+      </div>
+    </header>
+  );
+};
