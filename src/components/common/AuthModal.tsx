@@ -161,7 +161,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     autoComplete="username"
                     value={usernameOrEmail}
                     onChange={e => setUsernameOrEmail(e.target.value)}
-                    placeholder="sujal310126"
                     className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono focus:bg-white"
                   />
                 </div>
@@ -182,7 +181,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     autoComplete="current-password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
                     className="w-full pl-9 pr-10 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono focus:bg-white"
                   />
                   <button
