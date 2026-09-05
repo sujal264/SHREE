@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -9,6 +9,13 @@ import {
   MapPin,
   FileSpreadsheet,
   Download,
+  Cloud,
+  CheckCircle2,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useFinance } from '../../context/FinanceContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -34,8 +41,23 @@ export const SettingsView: React.FC = () => {
 
   const [isEditingActive, setIsEditingActive] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [festivalToDelete, setFestivalToDelete] = useState<{ id: string; name: string; year: number } | null>(null);
   const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
+  const [festivalToDelete, setFestivalToDelete] = useState<{ id: string; name: string; year: number } | null>(null);
+
+  // Google Drive automated daily backup state
+  const [gdriveWebhookUrl, setGdriveWebhookUrl] = useState(() => localStorage.getItem('gu_gdrive_webhook_url') || '');
+  const [isSyncingGdrive, setIsSyncingGdrive] = useState(false);
+  const [showGdriveGuide, setShowGdriveGuide] = useState(false);
+  const [isSavingGdriveConfig, setIsSavingGdriveConfig] = useState(false);
+  const [copiedScript, setCopiedScript] = useState(false);
+
+  useEffect(() => {
+    apiClient.getGoogleDriveConfig().then(cfg => {
+      if (cfg.configured && cfg.webhookUrlMasked && !localStorage.getItem('gu_gdrive_webhook_url')) {
+        setGdriveWebhookUrl(cfg.webhookUrlMasked);
+      }
+    });
+  }, []);
 
   // Active festival form state
   const [name, setName] = useState(activeFestival?.name || t.mandalName);
@@ -157,6 +179,68 @@ export const SettingsView: React.FC = () => {
     }
   };
 
+  const handleSaveGdriveWebhook = async () => {
+    if (!gdriveWebhookUrl.trim()) {
+      showToast('error', 'URL Required', 'Please enter a valid Google Apps Script Webhook URL.');
+      return;
+    }
+    setIsSavingGdriveConfig(true);
+    try {
+      localStorage.setItem('gu_gdrive_webhook_url', gdriveWebhookUrl.trim());
+      const res = await apiClient.saveGoogleDriveConfig(gdriveWebhookUrl.trim());
+      if (res.success) {
+        showToast('success', 'गुगल ड्राईव्ह सेव्ह झाले', 'Google Drive Webhook URL saved successfully. Daily auto-backup is active.');
+      } else {
+        showToast('warning', 'Saved locally', res.error || 'Saved locally in browser.');
+      }
+    } finally {
+      setIsSavingGdriveConfig(false);
+    }
+  };
+
+  const handleSyncGdriveNow = async () => {
+    setIsSyncingGdrive(true);
+    try {
+      const url = gdriveWebhookUrl.trim() || localStorage.getItem('gu_gdrive_webhook_url') || undefined;
+      const res = await apiClient.syncGoogleDriveBackup(url);
+      if (res.success) {
+        showToast(
+          'success',
+          language === 'mr' ? 'गुगल ड्राईव्हवर बॅकअप पूर्ण!' : 'Google Drive Backup Complete!',
+          language === 'mr'
+            ? 'संपूर्ण डेटाबेस बॅकअप गुगल ड्राईव्हवर यशस्वीरित्या सेव्ह झाला आहे.'
+            : 'Full database snapshot uploaded to your Google Drive folder.'
+        );
+      } else {
+        showToast(
+          'error',
+          language === 'mr' ? 'बॅकअप अयशस्वी' : 'Backup Failed',
+          res.error || 'Failed to upload to Google Drive'
+        );
+      }
+    } catch (err: any) {
+      showToast('error', 'Error', err.message || 'Could not connect to Google Drive');
+    } finally {
+      setIsSyncingGdrive(false);
+    }
+  };
+
+  const copyScriptToClipboard = () => {
+    const scriptCode = `function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var folderName = "Mandal Backups";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  var fileName = "shree_sai_mandal_backup_" + Utilities.formatDate(new Date(), "Asia/Kolkata", "yyyy-MM-dd_HH-mm") + ".json";
+  folder.createFile(fileName, JSON.stringify(data, null, 2), MimeType.PLAIN_TEXT);
+  return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+}`;
+    navigator.clipboard.writeText(scriptCode);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 2500);
+    showToast('info', 'Code Copied', 'Google Apps Script code copied to clipboard!');
+  };
+
   return (
     <div id="settings-view" className="space-y-6 font-['Mukta',sans-serif]">
       {/* Header */}
@@ -169,8 +253,8 @@ export const SettingsView: React.FC = () => {
           </div>
           <p className="text-xs text-slate-500 mt-1 font-medium">
             {language === 'mr'
-              ? 'मंडळाचे नाव, उत्सव वर्ष व्यवस्थापन, बॅनर मीडिया लायब्ररी आणि सुरुवातीची शिल्लक रक्कम'
-              : 'Configure mandal details, festival year archives, banner media library, and accounts'}
+              ? 'मंडळाचे नाव, उत्सव वर्ष व्यवस्थापन, बॅनर मीडिया लायब्ररी, ऑटोमॅटिक गुगल ड्राईव्ह बॅकअप आणि सुरुवातीची शिल्लक'
+              : 'Configure mandal details, festival year archives, media library, automated Google Drive backups, and accounts'}
           </p>
         </div>
 
@@ -202,6 +286,150 @@ export const SettingsView: React.FC = () => {
             <span>{language === 'mr' ? 'डमी डेटा साफ करा (Start Fresh)' : 'Clear Demo Data'}</span>
           </button>
         </div>
+      </div>
+
+      {/* Google Drive Automated Daily Backup Section */}
+      <div className="bg-gradient-to-br from-emerald-900 via-slate-900 to-teal-950 p-5 sm:p-6 rounded-3xl text-white shadow-lg border border-emerald-500/30 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-700/40 pb-3.5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+              <Cloud className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-black text-white">
+                  {language === 'mr' ? 'गुगल ड्राईव्ह ऑटो बॅकअप (Daily Auto-Backup)' : 'Google Drive Daily Auto-Backup'}
+                </h3>
+                <span className={`px-2 py-0.5 text-[10px] font-black rounded-full border ${
+                  gdriveWebhookUrl ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50' : 'bg-amber-500/20 text-amber-300 border-amber-400/50'
+                }`}>
+                  {gdriveWebhookUrl ? (language === 'mr' ? 'सक्रिय (Active)' : 'Active') : (language === 'mr' ? 'सेट करा' : 'Not Configured')}
+                </span>
+              </div>
+              <p className="text-xs text-emerald-200/80 font-medium mt-0.5">
+                {language === 'mr'
+                  ? 'दररोज रात्री ११:५९ वाजता सर्व जमा, खर्च व लेजर नोंदी आपोआप तुमच्या गुगल ड्राईव्हमध्ये सेव्ह होतात.'
+                  : 'Automatically saves a full database snapshot directly into your personal Google Drive folder daily at 11:59 PM.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              onClick={handleSyncGdriveNow}
+              disabled={isSyncingGdrive}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50"
+              title="Test upload now"
+            >
+              <Cloud className={`w-3.5 h-3.5 ${isSyncingGdrive ? 'animate-spin' : ''}`} />
+              <span>{isSyncingGdrive ? (language === 'mr' ? 'अपलोड होत आहे...' : 'Syncing...') : (language === 'mr' ? 'आताच सेव्ह करा (Sync Now)' : 'Sync to Drive Now')}</span>
+            </button>
+
+            <button
+              onClick={() => setShowGdriveGuide(!showGdriveGuide)}
+              className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-emerald-200 hover:text-white bg-emerald-800/40 hover:bg-emerald-800/60 rounded-xl border border-emerald-600/40 transition-all cursor-pointer"
+            >
+              <span>{language === 'mr' ? 'कसे सेट करायचे?' : 'Setup Guide'}</span>
+              {showGdriveGuide ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Webhook URL Input */}
+        <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center pt-1">
+          <div className="flex-1">
+            <label className="block text-[11px] font-bold text-emerald-300 mb-1">
+              {language === 'mr' ? 'गुगल ॲप्स स्क्रिप्ट वेबहूक URL (Google Apps Script Webhook URL)' : 'Google Apps Script Webhook URL'}
+            </label>
+            <input
+              type="url"
+              placeholder="https://script.google.com/macros/s/.../exec"
+              value={gdriveWebhookUrl}
+              onChange={e => setGdriveWebhookUrl(e.target.value)}
+              className="w-full px-3.5 py-2 bg-slate-950/70 border border-emerald-600/50 rounded-xl text-xs text-white placeholder-emerald-400/40 font-mono focus:outline-hidden focus:ring-2 focus:ring-emerald-400"
+            />
+          </div>
+
+          <button
+            onClick={handleSaveGdriveWebhook}
+            disabled={isSavingGdriveConfig}
+            className="sm:self-end px-4 py-2 text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow transition-all cursor-pointer disabled:opacity-50"
+          >
+            {isSavingGdriveConfig ? (language === 'mr' ? 'जतन होत आहे...' : 'Saving...') : (language === 'mr' ? 'URL जतन करा' : 'Save URL')}
+          </button>
+        </div>
+
+        {/* Collapsible 2-Minute Setup Guide */}
+        {showGdriveGuide && (
+          <div className="bg-slate-950/80 p-4 rounded-2xl border border-emerald-700/50 space-y-3 text-xs text-emerald-100">
+            <div className="flex items-center justify-between border-b border-emerald-800/60 pb-2">
+              <span className="font-black text-white text-sm">
+                {language === 'mr' ? '२ मिनिटात गुगल ड्राईव्ह लिंक करा (2-Minute Setup Steps):' : 'How to connect your Google Drive (2-Minute Setup):'}
+              </span>
+              <a
+                href="https://script.google.com"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 underline font-bold"
+              >
+                <span>script.google.com</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            <ol className="list-decimal list-inside space-y-1.5 text-xs text-emerald-200 font-medium">
+              <li>
+                {language === 'mr'
+                  ? 'तुमच्या गुगल ड्राईव्हमध्ये जा किंवा script.google.com उघडा आणि "+ New Project" वर क्लिक करा.'
+                  : 'Open script.google.com and click "+ New Project".'}
+              </li>
+              <li>
+                {language === 'mr'
+                  ? 'खालील कोड कॉपी करून तेथे पेस्ट करा:'
+                  : 'Copy the 8-line script below and paste it in the editor:'}
+              </li>
+            </ol>
+
+            <div className="relative bg-slate-900 p-3 rounded-xl border border-emerald-800/80 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+              <button
+                onClick={copyScriptToClipboard}
+                className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2.5 py-1 text-[10px] font-black bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg transition-all"
+              >
+                {copiedScript ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                <span>{copiedScript ? (language === 'mr' ? 'कॉपी झाले!' : 'Copied!') : (language === 'mr' ? 'कोड कॉपी करा' : 'Copy Code')}</span>
+              </button>
+              <pre className="pr-20">
+{`function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var folderName = "Mandal Backups";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  var fileName = "shree_sai_mandal_backup_" + Utilities.formatDate(new Date(), "Asia/Kolkata", "yyyy-MM-dd_HH-mm") + ".json";
+  folder.createFile(fileName, JSON.stringify(data, null, 2), MimeType.PLAIN_TEXT);
+  return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+}`}
+              </pre>
+            </div>
+
+            <ol start={3} className="list-decimal list-inside space-y-1.5 text-xs text-emerald-200 font-medium">
+              <li>
+                {language === 'mr'
+                  ? 'वर उजव्या कोपऱ्यात Deploy -> New Deployment -> Web App निवडा.'
+                  : 'Click Deploy -> New Deployment -> Select type "Web app".'}
+              </li>
+              <li>
+                {language === 'mr'
+                  ? '"Who has access" मध्ये "Anyone" निवडा आणि Deploy वर क्लिक करा.'
+                  : 'Set "Who has access" to "Anyone" and click Deploy.'}
+              </li>
+              <li>
+                {language === 'mr'
+                  ? 'मिळालेली Web App URL कॉपी करून वरील बॉक्समध्ये पेस्ट करा आणि "URL जतन करा" वर क्लिक करा!'
+                  : 'Copy the Web app URL and paste it in the box above!'}
+              </li>
+            </ol>
+          </div>
+        )}
       </div>
 
       {/* Multi-Year Festival Archive with DELETE Functionality */}

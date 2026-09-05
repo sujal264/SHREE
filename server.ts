@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { createServer as createViteServer } from 'vite';
 import {
   connectDB,
@@ -31,12 +32,54 @@ interface SessionData {
   role: 'admin' | 'viewer';
   expiresAt: number;
 }
-// Active in-memory session cache: Tokens are only created on verified credentials login
 const activeSessions = new Map<string, SessionData>();
+
+// Secret key for HMAC signed session tokens
+const SESSION_SECRET = process.env.SESSION_SECRET || 'mandal_sai_secret_key_2026_finance_pune_karvenagar';
+
+function generateSessionToken(userId: string, role: 'admin' | 'viewer', expiresAt: number): string {
+  const payload = `${userId}:${role}:${expiresAt}`;
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}:${sig}`).toString('base64url');
+}
+
+function verifySessionToken(tokenStr: string): SessionData | null {
+  if (!tokenStr) return null;
+  // 1. Check in-memory session cache first
+  const cached = activeSessions.get(tokenStr);
+  if (cached) {
+    if (cached.expiresAt > Date.now()) {
+      return cached;
+    }
+    activeSessions.delete(tokenStr);
+  }
+
+  // 2. Decode and verify stateless signed token
+  try {
+    const decoded = Buffer.from(tokenStr, 'base64url').toString('utf8');
+    const parts = decoded.split(':');
+    if (parts.length !== 4) return null;
+    const [userId, role, expiresAtStr, sig] = parts;
+    const expiresAt = parseInt(expiresAtStr, 10);
+    if (isNaN(expiresAt) || expiresAt < Date.now()) return null;
+    if (role !== 'admin' && role !== 'viewer') return null;
+
+    const payload = `${userId}:${role}:${expiresAt}`;
+    const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+    if (crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+      const sessionData: SessionData = { userId, role: role as 'admin' | 'viewer', expiresAt };
+      activeSessions.set(tokenStr, sessionData); // warm memory cache
+      return sessionData;
+    }
+  } catch {
+    // invalid token format
+  }
+  return null;
+}
 
 // RBAC Middleware:
 // Extracts session token from Authorization: Bearer <token>
-// Validates session against activeSessions.
+// Validates session cryptographically.
 // Unauthenticated visitors are STRICTLY assigned 'viewer' role with no mutation rights.
 function rbacAuthMiddleware(req: Request, _res: Response, next: NextFunction): void {
   let role: 'admin' | 'viewer' = 'viewer';
@@ -45,24 +88,11 @@ function rbacAuthMiddleware(req: Request, _res: Response, next: NextFunction): v
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7).trim();
-    const session = activeSessions.get(token);
-    if (session) {
-      if (session.expiresAt > Date.now()) {
-        role = session.role;
-        userId = session.userId;
-      } else {
-        // Session expired
-        activeSessions.delete(token);
-      }
+    const session = verifySessionToken(token);
+    if (session && session.expiresAt > Date.now()) {
+      role = session.role;
+      userId = session.userId;
     }
-  }
-
-  // Allow explicit client downgrade to viewer mode if desired,
-  // but NEVER allow client header alone to escalate to admin.
-  const explicitRole = req.headers['x-user-role'] as string;
-  if (explicitRole === 'viewer') {
-    role = 'viewer';
-    userId = 'guest';
   }
 
   (req as any).userRole = role;
@@ -173,9 +203,9 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       return;
     }
 
-    // 4. Create cryptographically secure session token (24 hour lifetime)
-    const token = crypto.randomBytes(32).toString('hex');
+    // 4. Create cryptographically secure signed session token (24 hour lifetime)
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+    const token = generateSessionToken(user.id, user.role, expiresAt);
     activeSessions.set(token, {
       userId: user.id,
       role: user.role,
@@ -268,40 +298,99 @@ app.post('/api/auth/logout', (req: Request, res: Response) => {
 });
 
 // 2. Full Database Backup (MongoDB Snapshot - Admin Only)
+async function createDatabaseBackupPayload() {
+  const [festivals, donations, expenses, budgets, mediaLibrary, members, auditLogs] = await Promise.all([
+    FestivalModel.find().lean(),
+    DonationModel.find().lean(),
+    ExpenseModel.find().lean(),
+    BudgetModel.find().lean(),
+    MediaModel.find().lean(),
+    MemberModel.find().lean(),
+    AuditLogModel.find().lean(),
+  ]);
+
+  return {
+    version: '2.5.0',
+    engine: 'MongoDB',
+    timestamp: new Date().toISOString(),
+    festivalYear: '36th Year (२०२६)',
+    mandalName: 'श्री साई मित्र मंडळ, कर्वेनगर, पुणे',
+    data: {
+      festivals,
+      donations,
+      expenses,
+      budgets,
+      mediaLibrary,
+      members,
+      auditLogs,
+    },
+  };
+}
+
+let configuredGdriveWebhookUrl = process.env.GOOGLE_DRIVE_WEBHOOK_URL || '';
+
+async function syncBackupToGoogleDrive(targetWebhookUrl?: string): Promise<{ success: boolean; message: string; timestamp: string }> {
+  const webhookUrl = targetWebhookUrl || configuredGdriveWebhookUrl || process.env.GOOGLE_DRIVE_WEBHOOK_URL;
+  if (!webhookUrl) {
+    throw new Error('Google Drive Webhook URL is not configured. Please paste your Google Apps Script URL in Settings.');
+  }
+
+  const payload = await createDatabaseBackupPayload();
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Google Drive webhook responded with HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  return {
+    success: true,
+    message: 'Database backup uploaded to Google Drive successfully!',
+    timestamp: payload.timestamp,
+  };
+}
+
 app.get('/api/backup', requireAdmin, async (_req: Request, res: Response) => {
   try {
-    const [festivals, donations, expenses, budgets, mediaLibrary, members, auditLogs] = await Promise.all([
-      FestivalModel.find().lean(),
-      DonationModel.find().lean(),
-      ExpenseModel.find().lean(),
-      BudgetModel.find().lean(),
-      MediaModel.find().lean(),
-      MemberModel.find().lean(),
-      AuditLogModel.find().lean(),
-    ]);
-
-    const backup = {
-      version: '2.5.0',
-      engine: 'MongoDB',
-      timestamp: new Date().toISOString(),
-      festivalYear: '36th Year (२०२६)',
-      mandalName: 'श्री साई मित्र मंडळ, कर्वेनगर, पुणे',
-      data: {
-        festivals,
-        donations,
-        expenses,
-        budgets,
-        mediaLibrary,
-        members,
-        auditLogs,
-      },
-    };
-
+    const backup = await createDatabaseBackupPayload();
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename=mandal_finance_backup_${Date.now()}.json`);
     res.json(backup);
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to create backup', details: err.message });
+  }
+});
+
+// Google Drive Backup Configuration & Sync
+app.get('/api/backup/gdrive-config', requireAdmin, (_req: Request, res: Response) => {
+  const currentUrl = configuredGdriveWebhookUrl || process.env.GOOGLE_DRIVE_WEBHOOK_URL || '';
+  res.json({
+    configured: !!currentUrl,
+    webhookUrlMasked: currentUrl ? currentUrl.substring(0, 35) + '...' : '',
+  });
+});
+
+app.post('/api/backup/gdrive-config', requireAdmin, (req: Request, res: Response) => {
+  const { webhookUrl } = req.body;
+  if (webhookUrl && typeof webhookUrl === 'string') {
+    configuredGdriveWebhookUrl = webhookUrl.trim();
+  }
+  res.json({ success: true, message: 'Google Drive Webhook URL saved successfully.' });
+});
+
+app.post('/api/backup/gdrive-sync', requireAdmin, async (req: Request, res: Response) => {
+  const { webhookUrl } = req.body;
+  try {
+    if (webhookUrl && typeof webhookUrl === 'string') {
+      configuredGdriveWebhookUrl = webhookUrl.trim();
+    }
+    const result = await syncBackupToGoogleDrive(webhookUrl);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -435,11 +524,25 @@ app.post('/api/donations', requireAdmin, async (req: Request, res: Response) => 
 app.put('/api/donations/:id', requireAdmin, async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const updated = await DonationModel.findOneAndUpdate(
+    const updateData = { ...req.body };
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.id;
+
+    let updated = await DonationModel.findOneAndUpdate(
       { id },
-      { ...req.body, updatedAt: new Date().toISOString() },
-      { returnDocument: 'after' }
+      { ...updateData, updatedAt: new Date().toISOString() },
+      { new: true }
     ).lean();
+
+    if (!updated && mongoose.Types.ObjectId.isValid(id)) {
+      updated = await DonationModel.findByIdAndUpdate(
+        id,
+        { ...updateData, updatedAt: new Date().toISOString() },
+        { new: true }
+      ).lean();
+    }
+
     if (!updated) {
       res.status(404).json({ error: 'Donation not found' });
       return;
@@ -453,7 +556,10 @@ app.put('/api/donations/:id', requireAdmin, async (req: Request, res: Response) 
 app.delete('/api/donations/:id', requireAdmin, async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    await DonationModel.deleteOne({ id });
+    const result = await DonationModel.deleteOne({ id });
+    if (result.deletedCount === 0 && mongoose.Types.ObjectId.isValid(id)) {
+      await DonationModel.deleteOne({ _id: id });
+    }
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -494,11 +600,25 @@ app.post('/api/expenses', requireAdmin, async (req: Request, res: Response) => {
 app.put('/api/expenses/:id', requireAdmin, async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const updated = await ExpenseModel.findOneAndUpdate(
+    const updateData = { ...req.body };
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.id;
+
+    let updated = await ExpenseModel.findOneAndUpdate(
       { id },
-      { ...req.body, updatedAt: new Date().toISOString() },
-      { returnDocument: 'after' }
+      { ...updateData, updatedAt: new Date().toISOString() },
+      { new: true }
     ).lean();
+
+    if (!updated && mongoose.Types.ObjectId.isValid(id)) {
+      updated = await ExpenseModel.findByIdAndUpdate(
+        id,
+        { ...updateData, updatedAt: new Date().toISOString() },
+        { new: true }
+      ).lean();
+    }
+
     if (!updated) {
       res.status(404).json({ error: 'Expense not found' });
       return;
@@ -512,7 +632,10 @@ app.put('/api/expenses/:id', requireAdmin, async (req: Request, res: Response) =
 app.delete('/api/expenses/:id', requireAdmin, async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    await ExpenseModel.deleteOne({ id });
+    const result = await ExpenseModel.deleteOne({ id });
+    if (result.deletedCount === 0 && mongoose.Types.ObjectId.isValid(id)) {
+      await ExpenseModel.deleteOne({ _id: id });
+    }
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -683,6 +806,33 @@ app.post('/api/clear-demo', requireAdmin, async (_req: Request, res: Response) =
     res.status(500).json({ error: err.message });
   }
 });
+
+// Daily Automatic Google Drive Backup Scheduler
+// Runs in background: triggers automatically once per day (or at 23:00-23:59 IST)
+let lastAutoBackupDay = '';
+setInterval(async () => {
+  try {
+    const webhookUrl = configuredGdriveWebhookUrl || process.env.GOOGLE_DRIVE_WEBHOOK_URL;
+    if (!webhookUrl) return;
+
+    const now = new Date();
+    // Indian Standard Time (IST) is UTC + 5 hours 30 minutes
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(now.getTime() + istOffsetMs);
+    const dayStr = istDate.toISOString().split('T')[0];
+    const hour = istDate.getUTCHours();
+
+    // Run automatically once per day at 23:00 IST or once per day
+    if ((hour === 23 || !lastAutoBackupDay) && lastAutoBackupDay !== dayStr) {
+      console.log(`[Auto-Backup] Running automated daily backup to Google Drive for ${dayStr}...`);
+      await syncBackupToGoogleDrive();
+      lastAutoBackupDay = dayStr;
+      console.log(`[Auto-Backup] Automated daily backup to Google Drive finished successfully.`);
+    }
+  } catch (err: any) {
+    console.warn('[Auto-Backup] Notice:', err.message);
+  }
+}, 15 * 60 * 1000); // Check every 15 minutes
 
 // Vite middleware / Static Serving
 async function startServer() {

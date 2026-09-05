@@ -20,8 +20,9 @@ export interface DbStatusResponse {
 
 export class ApiClient {
   private getHeaders(role?: string): HeadersInit {
-    const currentRole = role || localStorage.getItem('gu_current_role_v1') || 'viewer';
     const token = localStorage.getItem('gu_auth_token_v2') || '';
+    const storedRole = localStorage.getItem('gu_current_role_v1');
+    const currentRole = role || (token ? 'admin' : (storedRole || 'viewer'));
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'x-user-role': currentRole,
@@ -58,22 +59,26 @@ export class ApiClient {
   }
 
   // --- Auth Endpoints ---
-  async login(usernameOrEmail: string, password: string): Promise<{ success: boolean; token?: string; user?: any; role?: string; error?: string }> {
+  async login(usernameOrEmail: string, password: string): Promise<{ success: boolean; token?: string; role?: string; user?: any; error?: string }> {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: usernameOrEmail, email: usernameOrEmail, password }),
+        body: JSON.stringify({
+          username: usernameOrEmail,
+          email: usernameOrEmail,
+          password,
+        }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || 'Invalid username/email or password.' };
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Authentication failed' };
       }
       if (data.token) {
         localStorage.setItem('gu_auth_token_v2', data.token);
         localStorage.setItem('gu_current_role_v1', data.role || 'admin');
       }
-      return data;
+      return { success: true, token: data.token, role: data.role, user: data.user };
     } catch (e: any) {
       return { success: false, error: e.message || 'Network error during login' };
     }
@@ -93,7 +98,7 @@ export class ApiClient {
     }
   }
 
-  async getMe(): Promise<{ authenticated: boolean; role: 'admin' | 'viewer'; user?: any }> {
+  async getMe(): Promise<{ authenticated: boolean; role: string; user?: any }> {
     try {
       const res = await fetch('/api/auth/me', {
         headers: this.getHeaders(),
@@ -113,6 +118,52 @@ export class ApiClient {
       if (!res.ok) return { success: false, error: 'Failed to download database backup' };
       const backupData = await res.json();
       return { success: true, data: backupData };
+    } catch (e: any) {
+      return { success: false, error: e.message || 'Network error' };
+    }
+  }
+
+  async getGoogleDriveConfig(): Promise<{ configured: boolean; webhookUrlMasked?: string }> {
+    try {
+      const res = await fetch('/api/backup/gdrive-config', {
+        headers: this.getHeaders(),
+      });
+      if (!res.ok) return { configured: false };
+      return await res.json();
+    } catch {
+      return { configured: false };
+    }
+  }
+
+  async saveGoogleDriveConfig(webhookUrl: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/backup/gdrive-config', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ webhookUrl }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { success: false, error: err.error || 'Failed to save Google Drive config' };
+      }
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e.message || 'Network error' };
+    }
+  }
+
+  async syncGoogleDriveBackup(webhookUrl?: string): Promise<{ success: boolean; message?: string; timestamp?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/backup/gdrive-sync', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ webhookUrl }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { success: false, error: err.error || 'Failed to sync to Google Drive' };
+      }
+      return await res.json();
     } catch (e: any) {
       return { success: false, error: e.message || 'Network error' };
     }

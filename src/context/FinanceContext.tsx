@@ -77,13 +77,13 @@ interface FinanceContextType {
 
   // CRUD Handlers
   addDonation: (donation: Omit<Donation, 'id' | 'receiptNumber' | 'festivalId' | 'createdAt' | 'updatedAt' | 'createdBy'> & { receiptNumber?: string }) => Donation | null;
-  updateDonation: (donation: Donation) => void;
+  updateDonation: (donation: Donation) => Promise<void>;
   updateDonationStatus: (id: string, newStatus: DonationStatus, receivedDate?: string) => void;
-  deleteDonation: (id: string) => void;
+  deleteDonation: (id: string) => Promise<void>;
 
   addExpense: (expense: Omit<Expense, 'id' | 'festivalId' | 'createdAt' | 'updatedAt' | 'createdBy'>) => Expense | null;
-  updateExpense: (expense: Expense) => void;
-  deleteExpense: (id: string) => void;
+  updateExpense: (expense: Expense) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
 
   setCategoryBudget: (category: ExpenseCategory, amount: number) => void;
   addMember: (email: string, name: string, role: UserRole, phone?: string) => void;
@@ -551,12 +551,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return newDonation;
   };
 
-  const updateDonation = (donation: Donation) => {
+  const updateDonation = async (donation: Donation) => {
     if (!checkAdminPermission()) return;
     if (!activeFestival) return;
 
+    const prevDonation = donations.find(d => d.id === donation.id);
+    setDonations(prev => prev.map(d => (d.id === donation.id ? donation : d)));
     storageService.saveDonation(donation);
-    apiClient.updateDonation(donation.id, donation, currentUser?.role);
+
+    const res = await apiClient.updateDonation(donation.id, donation, currentUser?.role);
+    if (res.error) {
+      if (prevDonation) {
+        setDonations(prev => prev.map(d => (d.id === donation.id ? prevDonation : d)));
+        storageService.saveDonation(prevDonation);
+      }
+      showToast('error', 'पावती अद्ययावत अयशस्वी (Update Failed)', res.error);
+      return;
+    }
 
     const auditData = {
       festivalId: activeFestival.id,
@@ -574,8 +585,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setSelectedReceiptDonation(donation);
     }
 
-    reloadData(activeFestival.id);
-    showToast('info', 'Donation Updated', `Receipt ${donation.receiptNumber} was updated in MongoDB.`);
+    await reloadData(activeFestival.id);
+    showToast('info', 'पावती अद्ययावत केली (Donation Updated)', `पावती क्र. ${donation.receiptNumber} अद्ययावत केली.`);
   };
 
   const updateDonationStatus = (id: string, newStatus: DonationStatus, receivedDate?: string) => {
@@ -598,13 +609,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateDonation(updated);
   };
 
-  const deleteDonation = (id: string) => {
+  const deleteDonation = async (id: string) => {
     if (!checkAdminPermission()) return;
     if (!activeFestival) return;
 
     const target = donations.find(d => d.id === id);
+    setDonations(prev => prev.filter(d => d.id !== id));
     storageService.deleteDonation(id);
-    apiClient.deleteDonation(id, currentUser?.role);
+
+    const res = await apiClient.deleteDonation(id, currentUser?.role);
+    if (!res.success) {
+      if (target) {
+        setDonations(prev => [...prev, target]);
+        storageService.saveDonation(target);
+      }
+      showToast('error', 'पावती हटवणे अयशस्वी (Delete Failed)', res.error || 'Server error');
+      return;
+    }
 
     const auditData = {
       festivalId: activeFestival.id,
@@ -618,8 +639,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     storageService.addAuditLog(auditData);
     apiClient.createAuditLog(auditData);
 
-    reloadData(activeFestival.id);
-    showToast('warning', 'Donation Deleted', `Donation ${target?.receiptNumber || ''} has been removed.`);
+    await reloadData(activeFestival.id);
+    showToast('warning', 'पावती हटवली (Donation Deleted)', `पावती क्र. ${target?.receiptNumber || ''} हटवली.`);
   };
 
   const addExpense = (
@@ -661,17 +682,27 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     storageService.addAuditLog(auditData);
     apiClient.createAuditLog(auditData);
 
-    showToast('success', 'Expense Recorded in Database', `₹${newExpense.amount.toLocaleString('en-IN')} for ${newExpense.category} added.`);
+    showToast('success', 'खर्च नोंदवला (Expense Recorded)', `₹${newExpense.amount.toLocaleString('en-IN')} खर्चाची नोंद झाली.`);
     return newExpense;
   };
 
-  const updateExpense = (expense: Expense) => {
+  const updateExpense = async (expense: Expense) => {
     if (!checkAdminPermission()) return;
     if (!activeFestival) return;
 
+    const prevExpense = expenses.find(e => e.id === expense.id);
     setExpenses(prev => prev.map(e => (e.id === expense.id ? expense : e)));
     storageService.saveExpense(expense);
-    apiClient.updateExpense(expense.id, expense, currentUser?.role);
+
+    const res = await apiClient.updateExpense(expense.id, expense, currentUser?.role);
+    if (res.error) {
+      if (prevExpense) {
+        setExpenses(prev => prev.map(e => (e.id === expense.id ? prevExpense : e)));
+        storageService.saveExpense(prevExpense);
+      }
+      showToast('error', 'खर्च अद्ययावत अयशस्वी (Update Failed)', res.error);
+      return;
+    }
 
     const auditData = {
       festivalId: activeFestival.id,
@@ -685,17 +716,27 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     storageService.addAuditLog(auditData);
     apiClient.createAuditLog(auditData);
 
-    showToast('info', 'Expense Updated', `Expense record "${expense.title}" updated in MongoDB.`);
+    await reloadData(activeFestival.id);
+    showToast('info', 'खर्च अद्ययावत केला (Expense Updated)', `"${expense.title}" ची नोंद अद्ययावत केली.`);
   };
 
-  const deleteExpense = (id: string) => {
+  const deleteExpense = async (id: string) => {
     if (!checkAdminPermission()) return;
     if (!activeFestival) return;
 
     const target = expenses.find(e => e.id === id);
     setExpenses(prev => prev.filter(e => e.id !== id));
     storageService.deleteExpense(id);
-    apiClient.deleteExpense(id, currentUser?.role);
+
+    const res = await apiClient.deleteExpense(id, currentUser?.role);
+    if (!res.success) {
+      if (target) {
+        setExpenses(prev => [...prev, target]);
+        storageService.saveExpense(target);
+      }
+      showToast('error', 'खर्च हटवणे अयशस्वी (Delete Failed)', res.error || 'Server error');
+      return;
+    }
 
     const auditData = {
       festivalId: activeFestival.id,
@@ -709,8 +750,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     storageService.addAuditLog(auditData);
     apiClient.createAuditLog(auditData);
 
-    reloadData(activeFestival.id);
-    showToast('warning', 'Expense Deleted', `Expense record has been deleted from MongoDB.`);
+    await reloadData(activeFestival.id);
+    showToast('warning', 'खर्च हटवला (Expense Deleted)', `खर्च यशस्वीरित्या हटवला गेला.`);
   };
 
   const setCategoryBudget = (category: ExpenseCategory, amount: number) => {
