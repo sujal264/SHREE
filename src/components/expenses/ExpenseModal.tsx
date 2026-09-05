@@ -27,9 +27,8 @@ const EXPENSE_CATEGORIES: ExpenseCategory[] = [
   'Transportation',
   'Security',
   'Cleaning',
-  'Prize/Trophy',
-  'Cultural Program',
-  'Police/Permissions',
+  'Cultural Events',
+  'Charity',
   'Miscellaneous',
 ];
 

@@ -6,6 +6,7 @@ import {
   LogOut,
   Eye,
   RotateCw,
+  ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useFinance } from '../../context/FinanceContext';
@@ -16,11 +17,15 @@ interface NavbarProps {
   onGoLanding?: () => void;
   onOpenDonationModal?: () => void;
   onOpenExpenseModal?: () => void;
+  activeTab?: string;
+  onBack?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onToggleMobileMenu,
   onGoLanding,
+  activeTab,
+  onBack,
 }) => {
   const { isAdmin, openAuthModal, logout } = useAuth();
   const { refreshData, showToast } = useFinance();
@@ -50,10 +55,42 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  const getTabLabel = (tab?: string) => {
+    switch (tab) {
+      case 'donations':
+        return language === 'mr' ? 'वर्गणी' : 'Donations';
+      case 'expenses':
+        return language === 'mr' ? 'खर्च' : 'Expenses';
+      case 'ledger':
+        return language === 'mr' ? 'खतावणी' : 'Ledger';
+      case 'reports':
+        return language === 'mr' ? 'अहवाल' : 'Reports';
+      case 'settings':
+        return language === 'mr' ? 'सेटिंग्ज' : 'Settings';
+      default:
+        return '';
+    }
+  };
+
+  const currentTabName = getTabLabel(activeTab);
+
   return (
     <header className="h-16 bg-white border-b border-amber-200/80 px-2.5 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-['Mukta',sans-serif]">
-      {/* Left: Mobile hamburger & Mandal Title */}
-      <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+      {/* Left: Mobile hamburger, Back button & Mandal Title */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+        {/* On-screen Back button: always visible when inside any subpage (expenses, donations, etc.) */}
+        {activeTab && activeTab !== 'dashboard' && (
+          <button
+            id="navbar-back-btn"
+            onClick={onBack}
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+            title={language === 'mr' ? 'मागे जा / डॅशबोर्ड (Go Back to Dashboard)' : 'Go Back to Dashboard'}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>{language === 'mr' ? 'मागे' : 'Back'}</span>
+          </button>
+        )}
+
         <button
           onClick={onToggleMobileMenu}
           className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl md:hidden cursor-pointer shrink-0"
@@ -75,8 +112,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           />
 
           <div className="min-w-0 font-['Mukta',sans-serif]">
-            <div className="text-xs sm:text-sm font-black text-amber-950 truncate max-w-[130px] sm:max-w-xs md:max-w-md leading-tight">
-              श्री साई मित्र मंडळ २०२६
+            <div className="flex items-center gap-1.5">
+              <div className="text-xs sm:text-sm font-black text-amber-950 truncate max-w-[120px] xs:max-w-[150px] sm:max-w-xs md:max-w-md leading-tight">
+                श्री साई मित्र मंडळ २०२६
+              </div>
+              {currentTabName && (
+                <span className="hidden sm:inline-block text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.2 rounded">
+                  {currentTabName}
+                </span>
+              )}
             </div>
             <div className="text-[10px] sm:text-[11px] text-slate-500 hidden sm:flex items-center gap-1.5 font-medium truncate">
               <span className="text-amber-800 font-bold">स्थापना: १९९०</span>
