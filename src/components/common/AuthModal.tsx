@@ -161,7 +161,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     autoComplete="username"
                     value={usernameOrEmail}
                     onChange={e => setUsernameOrEmail(e.target.value)}
-                    placeholder="admin@ganeshutsav.org"
+                    placeholder="sujal310126"
                     className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono focus:bg-white"
                   />
                 </div>

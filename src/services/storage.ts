@@ -60,7 +60,7 @@ const DEFAULT_USERS: User[] = [
   {
     id: 'user-admin',
     name: 'Mandal Admin',
-    email: 'admin@ganeshutsav.org',
+    email: 'sujal310126@ganeshutsav.org',
     phone: '+91 98765 43210',
     role: 'admin',
     createdAt: '2026-08-01T00:00:00.000Z',

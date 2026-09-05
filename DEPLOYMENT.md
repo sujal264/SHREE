@@ -72,5 +72,6 @@ git push -u origin main
    - Go to **Network Access** → **IP Access List**.
    - Ensure `0.0.0.0/0` (Allow access from anywhere) is added so cloud hosting servers can connect to your database.
 2. **Admin Credentials**:
-   - Default admin login password: `admin123`.
+   - Username: `sujal310126`
+   - Password: `Sujaldhm@#12`
    - You can manage committee members, roles, and settings directly from the dashboard.

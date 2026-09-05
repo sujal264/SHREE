@@ -135,16 +135,16 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       ],
     }).lean();
 
-    // Built-in Admin credentials support (matches documentation in DEPLOYMENT.md: admin123 & Admin@2026)
-    const isMasterAdminIdentifier = identifier === 'admin' || identifier === 'admin@ganeshutsav.org';
-    const isMasterAdminPassword = password === 'admin123' || password === 'Admin@2026';
+    // Master Admin credentials: Only sujal310126 with password Sujaldhm@#12
+    const isMasterAdminIdentifier = identifier === 'sujal310126' || identifier === 'sujal310126@ganeshutsav.org';
+    const isMasterAdminPassword = password === 'Sujaldhm@#12';
 
     if (!user && isMasterAdminIdentifier && isMasterAdminPassword) {
       user = {
         id: 'user-admin',
         name: 'Mandal Admin',
-        username: 'admin',
-        email: 'admin@ganeshutsav.org',
+        username: 'sujal310126',
+        email: 'sujal310126@ganeshutsav.org',
         role: 'admin',
         phone: '+91 98765 43210',
         passwordSalt: ADMIN_SALT,
@@ -232,8 +232,8 @@ app.get('/api/auth/me', async (req: Request, res: Response) => {
           user: {
             id: 'user-admin',
             name: 'Mandal Admin',
-            username: 'admin',
-            email: 'admin@ganeshutsav.org',
+            username: 'sujal310126',
+            email: 'sujal310126@ganeshutsav.org',
             role: 'admin',
             phone: '+91 98765 43210',
           },

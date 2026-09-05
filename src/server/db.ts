@@ -7,7 +7,7 @@ export function hashPassword(password: string, salt: string): string {
 }
 
 export const ADMIN_SALT = 'e9f4c3a1728564b90123456789abcdef';
-export const ADMIN_HASH = hashPassword('Admin@2026', ADMIN_SALT);
+export const ADMIN_HASH = hashPassword('Sujaldhm@#12', ADMIN_SALT);
 
 // Interfaces
 export interface IUser {
@@ -326,15 +326,15 @@ function getMaskedUri(uri: string): string {
 // Auto-seed baseline data if database is fresh
 export async function seedInitialData() {
   try {
-    // 1. Seed Users (Admin & Viewer)
+    // 1. Seed or Update Users (Admin: sujal310126 & Viewer)
     const userCount = await UserModel.countDocuments();
     if (userCount === 0) {
       await UserModel.create([
         {
           id: 'user-admin',
           name: 'Mandal Admin',
-          username: 'admin',
-          email: 'admin@ganeshutsav.org',
+          username: 'sujal310126',
+          email: 'sujal310126@ganeshutsav.org',
           role: 'admin',
           phone: '+91 98765 43210',
           passwordSalt: ADMIN_SALT,
@@ -351,7 +351,21 @@ export async function seedInitialData() {
           passwordHash: '',
         },
       ]);
-      console.log('[MongoDB] Seeded default Admin and Viewer users.');
+      console.log('[MongoDB] Seeded default Admin (sujal310126) and Viewer users.');
+    } else {
+      // Ensure existing admin credentials in MongoDB match the new admin
+      await UserModel.updateMany(
+        { $or: [{ username: 'admin' }, { role: 'admin' }, { id: 'user-admin' }] },
+        {
+          $set: {
+            username: 'sujal310126',
+            email: 'sujal310126@ganeshutsav.org',
+            passwordSalt: ADMIN_SALT,
+            passwordHash: ADMIN_HASH,
+          },
+        }
+      );
+      console.log('[MongoDB] Updated existing Admin user credentials to sujal310126.');
     }
 
     // 2. Seed Default Festival (36th Year - 2026)
