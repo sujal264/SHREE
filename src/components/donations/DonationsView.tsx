@@ -409,45 +409,43 @@ export const DonationsView: React.FC<DonationsViewProps> = ({ onOpenDonationModa
                     <span>{language === 'mr' ? 'पावती पहा / शेअर' : 'Receipt / Share'}</span>
                   </button>
 
-                  <div className="flex items-center gap-1">
-                    <select
-                      id={`mobile-status-select-${d.receiptNumber}`}
-                      value={d.status}
-                      onChange={e => {
-                        const newStatus = e.target.value as DonationStatus;
-                        if (newStatus === d.status) return;
-                        setStatusConfirmState({
-                          donation: d,
-                          targetStatus: newStatus,
-                          receivedDate: d.receivedDate || getTodayDateString(),
-                        });
-                      }}
-                      className="text-[11px] font-bold rounded-lg px-2 py-1 bg-slate-100 border border-slate-200 text-slate-700"
-                    >
-                      <option value="Pending">⏳ {t.statusPending}</option>
-                      <option value="Received">✓ {t.statusReceived}</option>
-                      <option value="Cancelled">✕ {t.statusCancelled}</option>
-                    </select>
+                  {canEdit && (
+                    <div className="flex items-center gap-1">
+                      <select
+                        id={`mobile-status-select-${d.receiptNumber}`}
+                        value={d.status}
+                        onChange={e => {
+                          const newStatus = e.target.value as DonationStatus;
+                          if (newStatus === d.status) return;
+                          setStatusConfirmState({
+                            donation: d,
+                            targetStatus: newStatus,
+                            receivedDate: d.receivedDate || getTodayDateString(),
+                          });
+                        }}
+                        className="text-[11px] font-bold rounded-lg px-2 py-1 bg-slate-100 border border-slate-200 text-slate-700 cursor-pointer"
+                      >
+                        <option value="Pending">⏳ {t.statusPending}</option>
+                        <option value="Received">✓ {t.statusReceived}</option>
+                        <option value="Cancelled">✕ {t.statusCancelled}</option>
+                      </select>
 
-                    {canEdit && (
-                      <>
-                        <button
-                          onClick={() => onOpenDonationModal(d)}
-                          className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
-                          title={t.edit}
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setSelectedDonationForDelete(d)}
-                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"
-                          title={t.delete}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                      <button
+                        onClick={() => onOpenDonationModal(d)}
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                        title={t.edit}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedDonationForDelete(d)}
+                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                        title={t.delete}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
@@ -518,33 +516,62 @@ export const DonationsView: React.FC<DonationsViewProps> = ({ onOpenDonationModa
                       +{formatINR(d.amount)}
                     </td>
 
-                    {/* Status (Interactive Switcher with Confirmation) */}
+                    {/* Status: Interactive dropdown only for Admin, Read-only badge for Viewer */}
                     <td className="py-3.5 px-4 text-center">
-                      <select
-                        id={`donation-status-select-${d.receiptNumber}`}
-                        value={d.status}
-                        onChange={e => {
-                          const newStatus = e.target.value as DonationStatus;
-                          if (newStatus === d.status) return;
-                          setStatusConfirmState({
-                            donation: d,
-                            targetStatus: newStatus,
-                            receivedDate: d.receivedDate || getTodayDateString(),
-                          });
-                        }}
-                        className={`text-[11px] font-black rounded-xl px-2.5 py-1 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all ${
-                          d.status === 'Received'
-                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
-                            : d.status === 'Pending'
-                            ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                            : 'bg-rose-100 text-rose-900 border-rose-300 hover:bg-rose-200'
-                        }`}
-                        title={language === 'mr' ? 'स्थिती बदला' : 'Change status'}
-                      >
-                        <option value="Pending">⏳ {t.statusPending}</option>
-                        <option value="Received">✓ {t.statusReceived}</option>
-                        <option value="Cancelled">✕ {t.statusCancelled}</option>
-                      </select>
+                      {canEdit ? (
+                        <select
+                          id={`donation-status-select-${d.receiptNumber}`}
+                          value={d.status}
+                          onChange={e => {
+                            const newStatus = e.target.value as DonationStatus;
+                            if (newStatus === d.status) return;
+                            setStatusConfirmState({
+                              donation: d,
+                              targetStatus: newStatus,
+                              receivedDate: d.receivedDate || getTodayDateString(),
+                            });
+                          }}
+                          className={`text-[11px] font-black rounded-xl px-2.5 py-1 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all ${
+                            d.status === 'Received'
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
+                              : d.status === 'Pending'
+                              ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                              : 'bg-rose-100 text-rose-900 border-rose-300 hover:bg-rose-200'
+                          }`}
+                          title={language === 'mr' ? 'स्थिती बदला' : 'Change status'}
+                        >
+                          <option value="Pending">⏳ {t.statusPending}</option>
+                          <option value="Received">✓ {t.statusReceived}</option>
+                          <option value="Cancelled">✕ {t.statusCancelled}</option>
+                        </select>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border select-none ${
+                            d.status === 'Received'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : d.status === 'Pending'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : 'bg-rose-50 text-rose-800 border-rose-200'
+                          }`}
+                        >
+                          {d.status === 'Received' ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span>{t.statusReceived}</span>
+                            </>
+                          ) : d.status === 'Pending' ? (
+                            <>
+                              <span>⏳</span>
+                              <span>{t.statusPending}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>✕</span>
+                              <span>{t.statusCancelled}</span>
+                            </>
+                          )}
+                        </span>
+                      )}
                     </td>
 
                     {/* Actions */}

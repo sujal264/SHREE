@@ -12,6 +12,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatINR, getCategoryBadgeColor } from '../../utils/formatters';
 import { MandalBanner } from '../common/MandalBanner';
+import { useAuth } from '../../context/AuthContext';
 
 interface DashboardViewProps {
   onNavigate: (tab: string) => void;
@@ -24,6 +25,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenDonationModal,
   onOpenExpenseModal,
 }) => {
+  const { canEdit } = useAuth();
   const {
     activeFestival,
     openingBalance,
@@ -60,9 +62,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     <div id="dashboard-view" className="space-y-6">
       {/* Top Banner: Authentic Mandal Banner with Shivaji Maharaj, Sai Baba, Est 1990 & 36th Year */}
       <MandalBanner
-        showActions={true}
-        onOpenDonation={onOpenDonationModal}
-        onOpenExpense={onOpenExpenseModal}
+        showActions={canEdit}
+        onOpenDonation={canEdit ? onOpenDonationModal : undefined}
+        onOpenExpense={canEdit ? onOpenExpenseModal : undefined}
         festivalYearNumber={festivalYearNumber}
       />
 

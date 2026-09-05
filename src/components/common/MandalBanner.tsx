@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface MandalBannerProps {
   className?: string;
@@ -19,6 +20,7 @@ export const MandalBanner: React.FC<MandalBannerProps> = ({
   compact = false,
 }) => {
   const { t, language } = useLanguage();
+  const { canEdit } = useAuth();
 
   return (
     <div
@@ -90,8 +92,8 @@ export const MandalBanner: React.FC<MandalBannerProps> = ({
           </div>
         </div>
 
-        {/* Quick Action Buttons: Only rendered/accessible if user has admin/canEdit permissions */}
-        {showActions && (
+        {/* Quick Action Buttons: STRICTLY only rendered if user has admin/canEdit permissions */}
+        {canEdit && showActions && (
           <div className="mt-3 pt-2.5 border-t border-amber-900/20 flex items-center justify-between gap-2 flex-wrap">
             <div className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />

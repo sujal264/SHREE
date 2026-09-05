@@ -5,6 +5,7 @@ import { Donation, Festival, DonationStatus } from '../../types';
 import { formatINR, getTodayDateString } from '../../utils/formatters';
 import { useFinance } from '../../context/FinanceContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface ReceiptModalProps {
   donation: Donation | null;
@@ -13,6 +14,7 @@ interface ReceiptModalProps {
 }
 
 export const ReceiptModal: React.FC<ReceiptModalProps> = ({ donation, festival, onClose }) => {
+  const { canEdit } = useAuth();
   const { showToast, updateDonationStatus } = useFinance();
   const {
     t,
@@ -262,24 +264,26 @@ We are deeply grateful for your generous contribution!`;
             </div>
 
             <div className="flex items-center gap-2 flex-wrap justify-end">
-              {/* Quick Status Toggle Button */}
-              {donation.status === 'Pending' ? (
-                <button
-                  id="receipt-mark-received-btn"
-                  onClick={() => setConfirmToggleStatus('Received')}
-                  className="px-3 py-1.5 text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{language === 'mr' ? 'रक्कम जमा झाली' : 'Mark as Received'}</span>
-                </button>
-              ) : (
-                <button
-                  id="receipt-mark-pending-btn"
-                  onClick={() => setConfirmToggleStatus('Pending')}
-                  className="px-3 py-1.5 text-xs font-black bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <span>⏳ {language === 'mr' ? 'प्रलंबित (Pending) ठेवा' : 'Mark as Pending'}</span>
-                </button>
+              {/* Quick Status Toggle Button: Admin Only */}
+              {canEdit && (
+                donation.status === 'Pending' ? (
+                  <button
+                    id="receipt-mark-received-btn"
+                    onClick={() => setConfirmToggleStatus('Received')}
+                    className="px-3 py-1.5 text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{language === 'mr' ? 'रक्कम जमा झाली' : 'Mark as Received'}</span>
+                  </button>
+                ) : (
+                  <button
+                    id="receipt-mark-pending-btn"
+                    onClick={() => setConfirmToggleStatus('Pending')}
+                    className="px-3 py-1.5 text-xs font-black bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>⏳ {language === 'mr' ? 'प्रलंबित (Pending) ठेवा' : 'Mark as Pending'}</span>
+                  </button>
+                )
               )}
 
               <button
