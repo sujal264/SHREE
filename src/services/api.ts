@@ -123,7 +123,15 @@ export class ApiClient {
     }
   }
 
-  async getGoogleDriveConfig(): Promise<{ configured: boolean; webhookUrlMasked?: string }> {
+  async getGoogleDriveConfig(): Promise<{
+    configured: boolean;
+    webhookUrlMasked?: string;
+    interval?: string;
+    intervalHours?: number;
+    lastBackupTime?: string;
+    nextBackupTime?: string;
+    lastBackupSuccess?: boolean;
+  }> {
     try {
       const res = await fetch('/api/backup/gdrive-config', {
         headers: this.getHeaders(),

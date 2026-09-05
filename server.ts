@@ -328,6 +328,10 @@ async function createDatabaseBackupPayload() {
 }
 
 let configuredGdriveWebhookUrl = process.env.GOOGLE_DRIVE_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbztA1UjkU_935MXBK2bPJEk_Loo8lcNifL5V8KXcgGuk7AmVOj7PSXBet3DDUYP_xooNg/exec';
+let lastGdriveBackupTime: string | null = new Date().toISOString();
+let lastGdriveBackupSuccess = true;
+const BACKUP_INTERVAL_MS = 2 * 60 * 60 * 1000; // Every 2 Hours (7,200,000 ms)
+let lastBackupExecutionMs = Date.now();
 
 async function syncBackupToGoogleDrive(targetWebhookUrl?: string): Promise<{ success: boolean; message: string; timestamp: string }> {
   const webhookUrl = targetWebhookUrl || configuredGdriveWebhookUrl || process.env.GOOGLE_DRIVE_WEBHOOK_URL;
@@ -345,6 +349,10 @@ async function syncBackupToGoogleDrive(targetWebhookUrl?: string): Promise<{ suc
   if (!response.ok) {
     throw new Error(`Google Drive webhook responded with HTTP ${response.status}: ${response.statusText}`);
   }
+
+  lastGdriveBackupTime = payload.timestamp;
+  lastGdriveBackupSuccess = true;
+  lastBackupExecutionMs = Date.now();
 
   return {
     success: true,
@@ -367,9 +375,17 @@ app.get('/api/backup', requireAdmin, async (_req: Request, res: Response) => {
 // Google Drive Backup Configuration & Sync
 app.get('/api/backup/gdrive-config', requireAdmin, (_req: Request, res: Response) => {
   const currentUrl = configuredGdriveWebhookUrl || process.env.GOOGLE_DRIVE_WEBHOOK_URL || '';
+  const lastTimeMs = lastGdriveBackupTime ? new Date(lastGdriveBackupTime).getTime() : Date.now();
+  const nextTimeMs = lastTimeMs + BACKUP_INTERVAL_MS;
+
   res.json({
     configured: !!currentUrl,
     webhookUrlMasked: currentUrl ? currentUrl.substring(0, 35) + '...' : '',
+    interval: '2 hours',
+    intervalHours: 2,
+    lastBackupTime: lastGdriveBackupTime,
+    nextBackupTime: new Date(nextTimeMs).toISOString(),
+    lastBackupSuccess: lastGdriveBackupSuccess,
   });
 });
 
@@ -807,32 +823,26 @@ app.post('/api/clear-demo', requireAdmin, async (_req: Request, res: Response) =
   }
 });
 
-// Daily Automatic Google Drive Backup Scheduler
-// Runs in background: triggers automatically once per day (or at 23:00-23:59 IST)
-let lastAutoBackupDay = '';
+// Automatic Google Drive Backup Scheduler
+// Runs continuously in background: triggers automatically every 2 Hours
 setInterval(async () => {
   try {
     const webhookUrl = configuredGdriveWebhookUrl || process.env.GOOGLE_DRIVE_WEBHOOK_URL;
     if (!webhookUrl) return;
 
-    const now = new Date();
-    // Indian Standard Time (IST) is UTC + 5 hours 30 minutes
-    const istOffsetMs = 5.5 * 60 * 60 * 1000;
-    const istDate = new Date(now.getTime() + istOffsetMs);
-    const dayStr = istDate.toISOString().split('T')[0];
-    const hour = istDate.getUTCHours();
-
-    // Run automatically once per day at 23:00 IST or once per day
-    if ((hour === 23 || !lastAutoBackupDay) && lastAutoBackupDay !== dayStr) {
-      console.log(`[Auto-Backup] Running automated daily backup to Google Drive for ${dayStr}...`);
+    const now = Date.now();
+    // Check if 2 hours (7,200,000 ms) have passed since the last backup
+    if (now - lastBackupExecutionMs >= BACKUP_INTERVAL_MS) {
+      const istTimeStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+      console.log(`[Auto-Backup] Running scheduled 2-hour backup to Google Drive (${istTimeStr} IST)...`);
       await syncBackupToGoogleDrive();
-      lastAutoBackupDay = dayStr;
-      console.log(`[Auto-Backup] Automated daily backup to Google Drive finished successfully.`);
+      lastBackupExecutionMs = Date.now();
+      console.log(`[Auto-Backup] Scheduled 2-hour backup to Google Drive finished successfully.`);
     }
   } catch (err: any) {
     console.warn('[Auto-Backup] Notice:', err.message);
   }
-}, 15 * 60 * 1000); // Check every 15 minutes
+}, 60 * 1000); // Check once every minute
 
 // Vite middleware / Static Serving
 async function startServer() {

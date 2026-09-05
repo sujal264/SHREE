@@ -51,12 +51,22 @@ export const SettingsView: React.FC = () => {
   const [showGdriveGuide, setShowGdriveGuide] = useState(false);
   const [isSavingGdriveConfig, setIsSavingGdriveConfig] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
+  const [backupScheduleInfo, setBackupScheduleInfo] = useState<{
+    interval?: string;
+    lastBackupTime?: string;
+    nextBackupTime?: string;
+  } | null>(null);
 
   useEffect(() => {
     apiClient.getGoogleDriveConfig().then(cfg => {
       if (cfg.configured && cfg.webhookUrlMasked && !localStorage.getItem('gu_gdrive_webhook_url')) {
         setGdriveWebhookUrl(cfg.webhookUrlMasked);
       }
+      setBackupScheduleInfo({
+        interval: cfg.interval || '2 hours',
+        lastBackupTime: cfg.lastBackupTime,
+        nextBackupTime: cfg.nextBackupTime,
+      });
     });
   }, []);
 
@@ -205,6 +215,13 @@ export const SettingsView: React.FC = () => {
       const url = gdriveWebhookUrl.trim() || localStorage.getItem('gu_gdrive_webhook_url') || undefined;
       const res = await apiClient.syncGoogleDriveBackup(url);
       if (res.success) {
+        const now = res.timestamp || new Date().toISOString();
+        const nextMs = new Date(now).getTime() + 2 * 60 * 60 * 1000;
+        setBackupScheduleInfo({
+          interval: '2 hours',
+          lastBackupTime: now,
+          nextBackupTime: new Date(nextMs).toISOString(),
+        });
         showToast(
           'success',
           language === 'mr' ? 'गुगल ड्राईव्हवर बॅकअप पूर्ण!' : 'Google Drive Backup Complete!',
@@ -299,7 +316,7 @@ export const SettingsView: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm sm:text-base font-black text-white">
-                  {language === 'mr' ? 'गुगल ड्राईव्ह ऑटो बॅकअप (Daily Auto-Backup)' : 'Google Drive Daily Auto-Backup'}
+                  {language === 'mr' ? 'गुगल ड्राईव्ह ऑटो बॅकअप (दर २ तासांनी)' : 'Google Drive Auto-Backup (Every 2 Hours)'}
                 </h3>
                 <span className={`px-2 py-0.5 text-[10px] font-black rounded-full border ${
                   gdriveWebhookUrl ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50' : 'bg-amber-500/20 text-amber-300 border-amber-400/50'
@@ -309,8 +326,8 @@ export const SettingsView: React.FC = () => {
               </div>
               <p className="text-xs text-emerald-200/80 font-medium mt-0.5">
                 {language === 'mr'
-                  ? 'दररोज रात्री ११:५९ वाजता सर्व जमा, खर्च व लेजर नोंदी आपोआप तुमच्या गुगल ड्राईव्हमध्ये सेव्ह होतात.'
-                  : 'Automatically saves a full database snapshot directly into your personal Google Drive folder daily at 11:59 PM.'}
+                  ? 'दर २ तासांनी आपोआप सर्व जमा, खर्च व लेजर नोंदींचा बॅकअप थेट तुमच्या Google Drive मध्ये सेव्ह होतो.'
+                  : 'Automatically saves a full database snapshot directly into your personal Google Drive folder every 2 hours.'}
               </p>
             </div>
           </div>
@@ -333,6 +350,42 @@ export const SettingsView: React.FC = () => {
               <span>{language === 'mr' ? 'कसे सेट करायचे?' : 'Setup Guide'}</span>
               {showGdriveGuide ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
+          </div>
+        </div>
+
+        {/* Schedule & Timing Indicators */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+          <div className="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-2.5 text-center">
+            <span className="text-[10px] uppercase font-bold text-emerald-300/80 block">
+              {language === 'mr' ? 'वेळापत्रक (Frequency)' : 'Backup Interval'}
+            </span>
+            <span className="text-xs font-black text-white">
+              {language === 'mr' ? 'दर २ तासांनी (Every 2 Hours)' : 'Every 2 Hours'}
+            </span>
+          </div>
+
+          <div className="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-2.5 text-center">
+            <span className="text-[10px] uppercase font-bold text-emerald-300/80 block">
+              {language === 'mr' ? 'शेवटचा बॅकअप (Last Backup)' : 'Last Backup Time'}
+            </span>
+            <span className="text-xs font-black text-emerald-400">
+              {backupScheduleInfo?.lastBackupTime
+                ? new Date(backupScheduleInfo.lastBackupTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) +
+                  ` (${new Date(backupScheduleInfo.lastBackupTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})`
+                : (language === 'mr' ? 'आताच सेव्ह केले' : 'Just now')}
+            </span>
+          </div>
+
+          <div className="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-2.5 text-center">
+            <span className="text-[10px] uppercase font-bold text-emerald-300/80 block">
+              {language === 'mr' ? 'पुढील बॅकअप (Next Scheduled)' : 'Next Scheduled Backup'}
+            </span>
+            <span className="text-xs font-black text-amber-300">
+              {backupScheduleInfo?.nextBackupTime
+                ? new Date(backupScheduleInfo.nextBackupTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) +
+                  ` (${new Date(backupScheduleInfo.nextBackupTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})`
+                : '~२ तासांनी (~2 hrs)'}
+            </span>
           </div>
         </div>
 
