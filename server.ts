@@ -327,7 +327,7 @@ async function createDatabaseBackupPayload() {
   };
 }
 
-let configuredGdriveWebhookUrl = process.env.GOOGLE_DRIVE_WEBHOOK_URL || '';
+let configuredGdriveWebhookUrl = process.env.GOOGLE_DRIVE_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbztA1UjkU_935MXBK2bPJEk_Loo8lcNifL5V8KXcgGuk7AmVOj7PSXBet3DDUYP_xooNg/exec';
 
 async function syncBackupToGoogleDrive(targetWebhookUrl?: string): Promise<{ success: boolean; message: string; timestamp: string }> {
   const webhookUrl = targetWebhookUrl || configuredGdriveWebhookUrl || process.env.GOOGLE_DRIVE_WEBHOOK_URL;

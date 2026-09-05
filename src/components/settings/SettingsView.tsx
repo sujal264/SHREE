@@ -45,7 +45,8 @@ export const SettingsView: React.FC = () => {
   const [festivalToDelete, setFestivalToDelete] = useState<{ id: string; name: string; year: number } | null>(null);
 
   // Google Drive automated daily backup state
-  const [gdriveWebhookUrl, setGdriveWebhookUrl] = useState(() => localStorage.getItem('gu_gdrive_webhook_url') || '');
+  const DEFAULT_GDRIVE_WEBHOOK = 'https://script.google.com/macros/s/AKfycbztA1UjkU_935MXBK2bPJEk_Loo8lcNifL5V8KXcgGuk7AmVOj7PSXBet3DDUYP_xooNg/exec';
+  const [gdriveWebhookUrl, setGdriveWebhookUrl] = useState(() => localStorage.getItem('gu_gdrive_webhook_url') || DEFAULT_GDRIVE_WEBHOOK);
   const [isSyncingGdrive, setIsSyncingGdrive] = useState(false);
   const [showGdriveGuide, setShowGdriveGuide] = useState(false);
   const [isSavingGdriveConfig, setIsSavingGdriveConfig] = useState(false);
