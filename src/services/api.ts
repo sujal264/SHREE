@@ -137,7 +137,7 @@ export class ApiClient {
         body: JSON.stringify(data),
       });
       if (res.status === 403) {
-        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { error: 'Failed to create festival' };
       const created = await res.json();
@@ -155,7 +155,7 @@ export class ApiClient {
         body: JSON.stringify(data),
       });
       if (res.status === 403) {
-        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { error: 'Failed to update festival' };
       const updated = await res.json();
@@ -172,7 +172,7 @@ export class ApiClient {
         headers: this.getHeaders(role),
       });
       if (res.status === 403) {
-        return { success: false, error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { success: false, error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { success: false, error: 'Failed to delete festival' };
       return { success: true };
@@ -201,7 +201,7 @@ export class ApiClient {
         body: JSON.stringify(data),
       });
       if (res.status === 403) {
-        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { error: 'Failed to record donation' };
       const donation = await res.json();
@@ -219,7 +219,7 @@ export class ApiClient {
         body: JSON.stringify(data),
       });
       if (res.status === 403) {
-        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { error: 'Failed to update donation' };
       const donation = await res.json();
@@ -236,7 +236,7 @@ export class ApiClient {
         headers: this.getHeaders(role),
       });
       if (res.status === 403) {
-        return { success: false, error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { success: false, error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { success: false, error: 'Failed to delete donation' };
       return { success: true };
@@ -265,7 +265,7 @@ export class ApiClient {
         body: JSON.stringify(data),
       });
       if (res.status === 403) {
-        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { error: 'Failed to record expense' };
       const expense = await res.json();
@@ -283,7 +283,7 @@ export class ApiClient {
         body: JSON.stringify(data),
       });
       if (res.status === 403) {
-        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { error: 'Failed to update expense' };
       const expense = await res.json();
@@ -300,7 +300,7 @@ export class ApiClient {
         headers: this.getHeaders(role),
       });
       if (res.status === 403) {
-        return { success: false, error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in as admin.' };
+        return { success: false, error: 'Forbidden (403): Viewer / Guest accounts have read-only access. Please log in.' };
       }
       if (!res.ok) return { success: false, error: 'Failed to delete expense' };
       return { success: true };

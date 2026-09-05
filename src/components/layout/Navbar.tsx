@@ -4,7 +4,6 @@ import {
   KeyRound,
   Shield,
   LogOut,
-  Sparkles,
   Eye,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -63,20 +62,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
       </div>
 
-      {/* Right: Landing shortcut + Login / Admin status */}
+      {/* Right: Login / Admin status */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        {/* Banner/Home Screen shortcut */}
-        {onGoLanding && (
-          <button
-            onClick={onGoLanding}
-            className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-            title={language === 'mr' ? 'स्वागत फलक' : 'Welcome Banner'}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            <span className="hidden md:inline">{language === 'mr' ? 'स्वागत फलक' : 'Banner'}</span>
-          </button>
-        )}
-
         {isAdmin ? (
           <div className="flex items-center gap-1 sm:gap-1.5">
             <button
@@ -106,10 +93,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               id="navbar-login-btn"
               onClick={openAuthModal}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer"
-              title="Admin Login"
+              title="Login"
             >
               <KeyRound className="w-3.5 h-3.5 text-amber-200" />
-              <span>{language === 'mr' ? 'ॲडमिन लॉगिन' : 'Admin Login'}</span>
+              <span>{language === 'mr' ? 'लॉगिन' : 'Login'}</span>
             </button>
           </div>
         )}

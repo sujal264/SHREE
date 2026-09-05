@@ -72,12 +72,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2.5 py-1 rounded-full border border-amber-200">
               {isAdmin
                 ? (language === 'mr' ? 'व्यवस्थापक सत्र सक्रिय' : 'Admin Session Active')
-                : (language === 'mr' ? 'सुरक्षित ॲडमिन प्रवेश' : 'Secure Admin Login')}
+                : (language === 'mr' ? 'सुरक्षित प्रवेश' : 'Secure Login')}
             </span>
             <h2 className="text-xl font-black text-slate-900 mt-2">
               {isAdmin
                 ? (language === 'mr' ? 'खाते माहिती व अधिकार' : 'Account & Permissions')
-                : (language === 'mr' ? 'व्यवस्थापक लॉगिन' : 'Administrator Login')}
+                : (language === 'mr' ? 'लॉगिन' : 'Login')}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {isAdmin
@@ -85,8 +85,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     ? 'तुम्ही व्यवस्थापक म्हणून लॉगिन आहात. सर्व हक्क (CRUD) चालू आहेत.'
                     : 'You are logged in as Admin with full add, edit, and delete permissions.')
                 : (language === 'mr'
-                    ? 'अतिथी/वाचक केवळ माहिती पाहू शकतात. बदल करण्यासाठी पासवर्ड आवश्यक आहे.'
-                    : 'Guests have read-only access. Enter admin credentials to add, edit, or delete data.')}
+                    ? 'अतिथी/वाचक केवळ माहिती पाहू शकतात. बदल करण्यासाठी लॉगिन आवश्यक आहे.'
+                    : 'Guests have read-only access. Enter credentials to log in.')}
             </p>
           </div>
           <button
@@ -215,7 +215,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <span>
                   {isLoading
                     ? (language === 'mr' ? 'पडताळणी चालू आहे...' : 'Verifying...')
-                    : (language === 'mr' ? 'व्यवस्थापक म्हणून लॉगिन करा' : 'Log In as Admin')}
+                    : (language === 'mr' ? 'लॉगिन करा' : 'Log In')}
                 </span>
               </button>
             </form>

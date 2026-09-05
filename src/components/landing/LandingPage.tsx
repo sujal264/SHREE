@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { Eye, KeyRound, Sparkles, ArrowRight } from 'lucide-react';
+import { Eye, KeyRound, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface LandingPageProps {
@@ -13,35 +13,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onLoginAdmin,
 }) => {
   const { language } = useLanguage();
-  const [showOptions, setShowOptions] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const totalDuration = 2500; // 2.5 seconds
-    const interval = 50;
-    const step = 100 / (totalDuration / interval);
-
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(timer);
-          setShowOptions(true);
-          return 100;
-        }
-        return prev + step;
-      });
-    }, interval);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleSkipWait = () => {
-    setShowOptions(true);
-    setProgress(100);
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-950 via-slate-950 to-black text-slate-100 flex flex-col justify-between font-['Mukta',sans-serif] selection:bg-amber-500 selection:text-black overflow-x-hidden">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-between font-['Mukta',sans-serif] selection:bg-amber-500 selection:text-white overflow-x-hidden">
       {/* Top Traditional Decorative Garland Border */}
       <div className="w-full h-3 sm:h-4 flex justify-between overflow-hidden opacity-90">
         {Array.from({ length: 48 }).map((_, i) => (
@@ -53,147 +27,107 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </div>
 
       {/* Top Bar: Establishment Badges */}
-      <header className="px-4 sm:px-6 py-2.5 max-w-5xl mx-auto w-full flex items-center justify-center text-xs sm:text-sm">
-        <div className="flex items-center gap-2 font-bold text-amber-400">
-          <span className="bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/40 text-[11px] sm:text-xs">
+      <header className="px-4 sm:px-6 py-3 max-w-5xl mx-auto w-full flex items-center justify-center text-xs sm:text-sm">
+        <div className="flex items-center gap-2 font-bold text-amber-900">
+          <span className="bg-amber-100 text-amber-900 px-3 py-0.5 rounded-full border border-amber-300 text-[11px] sm:text-xs font-black">
             {language === 'mr' ? 'स्थापना: १९९०' : 'Est: 1990'}
           </span>
-          <span className="text-amber-200/80 px-1">॥ श्री गजानन प्रसन्न ॥</span>
-          <span className="bg-red-900/80 text-amber-200 px-2.5 py-0.5 rounded-full border border-red-500/40 text-[11px] sm:text-xs font-black">
+          <span className="text-amber-800 px-1 font-extrabold">॥ श्री गजानन प्रसन्न ॥</span>
+          <span className="bg-red-100 text-red-900 px-3 py-0.5 rounded-full border border-red-300 text-[11px] sm:text-xs font-black">
             {language === 'mr' ? 'वर्ष: ३६ वे' : '36th Year'}
           </span>
         </div>
       </header>
 
       {/* Main Content Hero */}
-      <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-2 sm:py-4 max-w-4xl mx-auto w-full text-center">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-10 max-w-2xl mx-auto w-full text-center">
+        {/* Logo Emblem */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="mb-4"
+        >
+          <img
+            src="/favicon.png"
+            alt="Shree Sai Mitra Mandal Emblem"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover border-4 border-amber-400 shadow-xl shadow-amber-500/10 mx-auto"
+          />
+        </motion.div>
+
         {/* Mandal Grand Title */}
         <motion.div
-          initial={{ opacity: 0, y: -15 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-3 sm:mb-4"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-8"
         >
-          <div className="text-[11px] sm:text-xs uppercase tracking-widest text-amber-400 font-extrabold mb-1">
+          <div className="text-xs uppercase tracking-widest text-amber-700 font-extrabold mb-1">
             • ॥ ॐ साईं राम • श्री गणेशाय नमः ॥ •
           </div>
-          <h1
-            className="text-2xl sm:text-4xl md:text-5xl font-black text-amber-300 tracking-tight leading-tight"
-            style={{
-              textShadow: '0 2px 10px rgba(245, 158, 11, 0.4), 0 0 20px rgba(217, 119, 6, 0.2)',
-            }}
-          >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-amber-950 tracking-tight leading-tight drop-shadow-xs">
             श्री साई मित्र मंडळ
           </h1>
-          <div className="text-xs sm:text-sm md:text-base font-bold text-amber-200/90 mt-0.5">
+          <div className="text-sm sm:text-base font-bold text-slate-600 mt-1">
             सार्वजनिक गणेशोत्सव २०२६ • कर्वेनगर, पुणे
           </div>
         </motion.div>
 
-        {/* Banner Display: Chhatrapati Shivaji Maharaj & Sai Baba Banner */}
+        {/* Options */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7 }}
-          className="relative group w-full max-w-xs sm:max-w-md md:max-w-lg mb-4 sm:mb-6"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full max-w-md space-y-3"
         >
-          <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl blur-md opacity-40 group-hover:opacity-75 transition duration-1000" />
-          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-amber-400/80 bg-slate-900 shadow-2xl">
-            <img
-              src="/banner-shivaji-sai.jpg"
-              alt="Shree Sai Mitra Mandal - Chhatrapati Shivaji Maharaj & Sai Baba Ganesh Utsav Banner"
-              className="w-full max-h-[44vh] sm:max-h-[50vh] md:max-h-[55vh] object-contain mx-auto bg-amber-950/20"
-              loading="eager"
-            />
+          <p className="text-xs sm:text-sm text-slate-500 font-bold mb-2">
+            {language === 'mr'
+              ? 'कृपया पुढे जाण्यासाठी एक पर्याय निवडा:'
+              : 'Please select an option to continue:'}
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            {/* Option 1: Continue as Viewer */}
+            <button
+              id="continue-viewer-btn"
+              onClick={onContinueViewer}
+              className="group relative flex items-center justify-between p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 border-2 border-emerald-400 text-slate-900 shadow-sm hover:shadow-md transition-all cursor-pointer min-h-[56px]"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-black text-emerald-950">
+                  {language === 'mr' ? 'सार्वजनिक वाचक' : 'Continue as Viewer'}
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-emerald-700 group-hover:translate-x-1 transition-transform shrink-0" />
+            </button>
+
+            {/* Option 2: Login */}
+            <button
+              id="login-admin-btn"
+              onClick={onLoginAdmin}
+              className="group relative flex items-center justify-between p-4 rounded-2xl bg-amber-50 hover:bg-amber-100/80 border-2 border-amber-400 text-slate-900 shadow-sm hover:shadow-md transition-all cursor-pointer min-h-[56px]"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-black text-amber-950">
+                  {language === 'mr' ? 'लॉगिन' : 'Login'}
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-amber-700 group-hover:translate-x-1 transition-transform shrink-0" />
+            </button>
           </div>
         </motion.div>
-
-        {/* 2-3 Second Countdown or Options */}
-        <div className="w-full max-w-md px-2">
-          {!showOptions ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-2.5 py-1"
-            >
-              <div className="flex items-center justify-between text-xs text-amber-300/80 font-medium px-1">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                  <span>{language === 'mr' ? 'स्वागत आहे... कृपया थांबा' : 'Welcome... Loading options'}</span>
-                </span>
-                <button
-                  onClick={handleSkipWait}
-                  className="text-amber-400 hover:text-amber-200 underline font-bold cursor-pointer text-xs"
-                >
-                  {language === 'mr' ? 'आताच निवडा' : 'Select now'}
-                </button>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-amber-500/20">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-75 ease-out rounded-full"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-3"
-            >
-              <p className="text-xs sm:text-sm text-slate-300 font-bold mb-1">
-                {language === 'mr'
-                  ? 'कृपया पुढे जाण्यासाठी एक पर्याय निवडा:'
-                  : 'Please select an option to continue:'}
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                {/* Option 1: Continue as Viewer */}
-                <button
-                  id="continue-viewer-btn"
-                  onClick={onContinueViewer}
-                  className="group relative flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-emerald-950/80 to-slate-900 border-2 border-emerald-500/60 hover:border-emerald-400 text-white shadow-lg hover:shadow-emerald-900/40 transition-all cursor-pointer min-h-[56px]"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold shrink-0">
-                      <Eye className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm font-black text-emerald-300">
-                      {language === 'mr' ? 'सार्वजनिक वाचक' : 'Continue as Viewer'}
-                    </span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform shrink-0" />
-                </button>
-
-                {/* Option 2: Login as Admin */}
-                <button
-                  id="login-admin-btn"
-                  onClick={onLoginAdmin}
-                  className="group relative flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-amber-950/80 to-slate-900 border-2 border-amber-500/70 hover:border-amber-400 text-white shadow-lg hover:shadow-amber-900/40 transition-all cursor-pointer min-h-[56px]"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold shrink-0">
-                      <KeyRound className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm font-black text-amber-300">
-                      {language === 'mr' ? 'व्यवस्थापक लॉगिन' : 'Login as Admin'}
-                    </span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform shrink-0" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </div>
       </main>
 
       {/* Footer */}
-      <footer className="px-4 py-3 text-center text-[11px] text-slate-500 border-t border-slate-900">
+      <footer className="px-4 py-3.5 text-center text-xs text-slate-500 border-t border-slate-200 bg-slate-50">
         <div>
-          सौजन्य: <strong className="text-slate-400">श्री साई कॉलनी, कर्वेनगर, पुणे</strong>
+          सौजन्य: <strong className="text-slate-700">श्री साई कॉलनी, कर्वेनगर, पुणे</strong>
         </div>
       </footer>
     </div>

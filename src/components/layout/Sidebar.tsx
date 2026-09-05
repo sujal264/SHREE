@@ -6,7 +6,6 @@ import {
   FileText,
   Settings,
   Plus,
-  Sparkles,
 } from 'lucide-react';
 import { useFinance } from '../../context/FinanceContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -31,12 +30,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t, language } = useLanguage();
 
   const navItems = [
-    {
-      id: 'landing',
-      label: language === 'mr' ? 'स्वागत फलक' : 'Welcome Banner',
-      sublabel: language === 'mr' ? 'मंडळ मुख्य पृष्ठ' : 'Entry Screen',
-      icon: Sparkles,
-    },
     {
       id: 'dashboard',
       label: t.dashboard,

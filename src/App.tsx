@@ -178,7 +178,7 @@ const MainLayout: React.FC = () => {
                   </div>
                   <h2 className="text-lg sm:text-xl font-black text-slate-900">प्रवेश प्रतिबंधित (Access Restricted)</h2>
                   <p className="text-slate-600 text-xs sm:text-sm">
-                    मंडळ सेटिंग्ज केवळ अधिकृत व्यवस्थापकांसाठी (Admin) राखीव आहेत. बदल करण्यासाठी कृपया ॲडमिन म्हणून लॉगिन करा.
+                    मंडळ सेटिंग्ज केवळ अधिकृत व्यवस्थापकांसाठी राखीव आहेत. बदल करण्यासाठी कृपया लॉगिन करा.
                   </p>
                   <button
                     onClick={() => setActiveTab('dashboard')}
