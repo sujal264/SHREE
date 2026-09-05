@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Menu,
   KeyRound,
   Shield,
   LogOut,
   Eye,
+  RotateCw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useFinance } from '../../context/FinanceContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface NavbarProps {
@@ -21,7 +23,32 @@ export const Navbar: React.FC<NavbarProps> = ({
   onGoLanding,
 }) => {
   const { isAdmin, openAuthModal, logout } = useAuth();
+  const { refreshData, showToast } = useFinance();
   const { language } = useLanguage();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await refreshData();
+      showToast(
+        'success',
+        language === 'mr' ? 'माहिती अद्ययावत केली' : 'Data Refreshed',
+        language === 'mr'
+          ? 'सर्व जमा, खर्च व लेजर नोंदी अद्ययावत केल्या आहेत.'
+          : 'Latest donations, expenses, and ledger entries synced.'
+      );
+    } catch {
+      showToast(
+        'error',
+        language === 'mr' ? 'रिफ्रेश अयशस्वी' : 'Refresh Failed',
+        language === 'mr' ? 'कृपया पुन्हा प्रयत्न करा.' : 'Please try again.'
+      );
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   return (
     <header className="h-16 bg-white border-b border-amber-200/80 px-2.5 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-['Mukta',sans-serif]">
@@ -62,8 +89,21 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
       </div>
 
-      {/* Right: Login / Admin status */}
+      {/* Right: Refresh button + Login / Admin status */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Refresh button - Visible to BOTH Admin and Viewer */}
+        <button
+          id="navbar-refresh-btn"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-950 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 hover:border-amber-300 transition-all shadow-2xs cursor-pointer disabled:opacity-60"
+          title={language === 'mr' ? 'माहिती ताजी करा (Refresh Data)' : 'Refresh latest data'}
+        >
+          <RotateCw className={`w-3.5 h-3.5 text-amber-600 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline font-bold">
+            {language === 'mr' ? 'रिफ्रेश' : 'Refresh'}
+          </span>
+        </button>
         {isAdmin ? (
           <div className="flex items-center gap-1 sm:gap-1.5">
             <button

@@ -104,6 +104,7 @@ interface FinanceContextType {
   resetToDemo: () => void;
   resetToDemoData: () => void;
   switchFestival: (id: string) => void;
+  refreshData: () => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -152,7 +153,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   // Load Initial Data (Immediate cache load, then sync with MongoDB)
-  const reloadData = useCallback((festId?: string) => {
+  const reloadData = useCallback(async (festId?: string) => {
     const sanitizeFestival = (f: Festival): Festival => {
       if (f.name && (f.name.includes('श्री साई') || f.name.includes('मंडळ'))) {
         return {
@@ -183,7 +184,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     // 2. Asynchronously sync with MongoDB backend
-    apiClient.getFestivals().then(async (remoteFestivals) => {
+    try {
+      const remoteFestivals = await apiClient.getFestivals();
       if (remoteFestivals && remoteFestivals.length > 0) {
         const sanitizedRemote = remoteFestivals.map(sanitizeFestival);
         remoteFestivals.forEach((rf, idx) => {
@@ -198,34 +200,35 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setActiveFestivalIdState(targetId);
         storageService.setActiveFestivalId(targetId);
 
-        try {
-          const [remoteDonations, remoteExpenses, remoteBudgets, remoteMembers, remoteLogs] = await Promise.all([
-            apiClient.getDonations(targetId),
-            apiClient.getExpenses(targetId),
-            apiClient.getBudgets(targetId),
-            apiClient.getMembers(targetId),
-            apiClient.getAuditLogs(targetId),
-          ]);
+        const [remoteDonations, remoteExpenses, remoteBudgets, remoteMembers, remoteLogs] = await Promise.all([
+          apiClient.getDonations(targetId),
+          apiClient.getExpenses(targetId),
+          apiClient.getBudgets(targetId),
+          apiClient.getMembers(targetId),
+          apiClient.getAuditLogs(targetId),
+        ]);
 
-          if (remoteDonations) {
-            setDonations(remoteDonations);
-            storageService.saveDonationsList(targetId, remoteDonations);
-          }
-          if (remoteExpenses) {
-            setExpenses(remoteExpenses);
-            storageService.saveExpensesList(targetId, remoteExpenses);
-          }
-          if (remoteBudgets) setBudgets(remoteBudgets);
-          if (remoteMembers) setMembers(remoteMembers);
-          if (remoteLogs) setAuditLogs(remoteLogs);
-        } catch {
-          // offline / degraded fallback
+        if (remoteDonations) {
+          setDonations(remoteDonations);
+          storageService.saveDonationsList(targetId, remoteDonations);
         }
+        if (remoteExpenses) {
+          setExpenses(remoteExpenses);
+          storageService.saveExpensesList(targetId, remoteExpenses);
+        }
+        if (remoteBudgets) setBudgets(remoteBudgets);
+        if (remoteMembers) setMembers(remoteMembers);
+        if (remoteLogs) setAuditLogs(remoteLogs);
       }
-    }).catch(() => {
+    } catch {
       // offline / degraded fallback
-    });
+    }
   }, []);
+
+  const refreshData = useCallback(async (): Promise<void> => {
+    await refreshDbStatus();
+    await reloadData();
+  }, [refreshDbStatus, reloadData]);
 
   useEffect(() => {
     refreshDbStatus();
@@ -869,6 +872,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         resetToDemo: clearAllDemoData,
         resetToDemoData: clearAllDemoData,
         switchFestival: setActiveFestivalId,
+        refreshData,
       }}
     >
       {children}
