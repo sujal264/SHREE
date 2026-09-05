@@ -105,12 +105,12 @@ class StorageService {
         localStorage.removeItem('gu_users_v1');
         localStorage.removeItem('gu_members_v1');
 
-        // Set clean defaults
+        // Set clean defaults - strictly start as Viewer / Guest
         localStorage.setItem(STORAGE_KEYS.FESTIVALS, JSON.stringify(DEFAULT_FESTIVALS));
         localStorage.setItem(STORAGE_KEYS.ACTIVE_FESTIVAL_ID, JSON.stringify(DEFAULT_FESTIVALS[0].id));
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(DEFAULT_USERS));
-        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(DEFAULT_USERS[0]));
-        localStorage.setItem(STORAGE_KEYS.CURRENT_ROLE, 'admin');
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+        localStorage.setItem(STORAGE_KEYS.CURRENT_ROLE, 'viewer');
         localStorage.setItem(STORAGE_KEYS.DONATIONS, JSON.stringify([]));
         localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
         localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify([]));
@@ -152,16 +152,16 @@ class StorageService {
     return users;
   }
 
-  getCurrentUser(): User {
+  getCurrentUser(): User | null {
     const user = this.get<User | null>(STORAGE_KEYS.CURRENT_USER, null);
     if (user) return user;
-    const admin = DEFAULT_USERS.find(u => u.role === 'admin') || DEFAULT_USERS[0];
-    return admin;
+    return null;
   }
 
   setCurrentUser(user: User | null): void {
     if (!user) {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+      localStorage.setItem(STORAGE_KEYS.CURRENT_ROLE, 'viewer');
     } else {
       this.set(STORAGE_KEYS.CURRENT_USER, user);
       localStorage.setItem(STORAGE_KEYS.CURRENT_ROLE, user.role);
@@ -169,12 +169,13 @@ class StorageService {
   }
 
   // Switch role between 'admin' and 'viewer'
-  switchUserRole(role: 'admin' | 'viewer'): User {
-    const users = this.getUsers();
-    let target = users.find(u => u.role.toLowerCase() === role.toLowerCase());
-    if (!target) {
-      target = role === 'viewer' ? DEFAULT_USERS[1] : DEFAULT_USERS[0];
+  switchUserRole(role: 'admin' | 'viewer'): User | null {
+    if (role === 'viewer') {
+      this.setCurrentUser(null);
+      return null;
     }
+    const users = this.getUsers();
+    const target = users.find(u => u.role.toLowerCase() === 'admin') || DEFAULT_USERS[0];
     this.setCurrentUser(target);
     return target;
   }
@@ -188,7 +189,8 @@ class StorageService {
       users.push(user);
     }
     this.set(STORAGE_KEYS.USERS, users);
-    if (this.getCurrentUser().id === user.id) {
+    const current = this.getCurrentUser();
+    if (current && current.id === user.id) {
       this.setCurrentUser(user);
     }
   }

@@ -23,34 +23,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<User[]>(() => storageService.getUsers());
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('gu_auth_token_v2'));
-  const [currentUser, setCurrentUser] = useState<User | null>(() => storageService.getCurrentUser());
+  const [token, setToken] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
-  // Validate server session on startup
+  // Validate server session on startup: Strictly require a valid server-validated token
   useEffect(() => {
     const checkServerSession = async () => {
       const storedToken = localStorage.getItem('gu_auth_token_v2');
       if (storedToken) {
-        const me = await apiClient.getMe();
-        if (me.authenticated && me.role === 'admin') {
-          const adminUser = storageService.getUsers().find(u => u.role === 'admin') || me.user;
-          setCurrentUser(adminUser);
-          setToken(storedToken);
-          localStorage.setItem('gu_current_role_v1', 'admin');
-          return;
+        try {
+          const me = await apiClient.getMe();
+          if (me.authenticated && me.role === 'admin') {
+            const adminUser = storageService.getUsers().find(u => u.role === 'admin') || me.user;
+            setCurrentUser(adminUser);
+            setToken(storedToken);
+            localStorage.setItem('gu_current_role_v1', 'admin');
+            return;
+          }
+        } catch (err) {
+          console.warn('Session check failed, reverting to viewer:', err);
         }
       }
-      // If stored role is viewer or no valid admin session, set as viewer
-      const savedRole = localStorage.getItem('gu_current_role_v1');
-      if (savedRole === 'viewer') {
-        const viewerUser = storageService.getUsers().find(u => u.role === 'viewer') || null;
-        setCurrentUser(viewerUser);
-        return;
-      }
-      const adminUser = storageService.getUsers().find(u => u.role === 'admin') || storageService.getUsers()[0];
-      setCurrentUser(adminUser);
-      localStorage.setItem('gu_current_role_v1', 'admin');
+
+      // Enforce guest / viewer for any session without a valid server token
+      localStorage.removeItem('gu_auth_token_v2');
+      localStorage.setItem('gu_current_role_v1', 'viewer');
+      storageService.setCurrentUser(null);
+      setCurrentUser(null);
+      setToken(null);
     };
 
     checkServerSession();
@@ -98,9 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     await apiClient.logout();
     setToken(null);
-    const viewer = storageService.getUsers().find(u => u.role === 'viewer') || null;
-    storageService.setCurrentUser(viewer);
-    setCurrentUser(viewer);
+    storageService.setCurrentUser(null);
+    setCurrentUser(null);
     localStorage.removeItem('gu_auth_token_v2');
     localStorage.setItem('gu_current_role_v1', 'viewer');
   };

@@ -81,39 +81,41 @@ We are deeply grateful for your generous contribution!`;
           initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
-          className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden my-6 border border-slate-200"
+          className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col border border-slate-200"
         >
           {/* Modal Header Controls (Hidden during print) */}
-          <div className="flex items-center justify-between px-6 py-4 bg-slate-900 text-white no-print">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between px-3.5 sm:px-6 py-3 sm:py-4 bg-slate-900 text-white no-print shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-base shrink-0">
                 🪔
               </div>
-              <div>
-                <h3 className="text-sm font-black tracking-tight">{t.receiptTitle}</h3>
-                <p className="text-xs text-slate-400 font-mono">{t.receiptNumber}: {donation.receiptNumber}</p>
+              <div className="truncate">
+                <h3 className="text-xs sm:text-sm font-black tracking-tight truncate">{t.receiptTitle}</h3>
+                <p className="text-[11px] sm:text-xs text-slate-400 font-mono">#{donation.receiptNumber}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={handleCopySummary}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors cursor-pointer"
                 title={language === 'mr' ? 'व्हॉट्सॲपवर पाठवण्यासाठी कॉपी करा' : 'Copy summary for WhatsApp'}
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-                <span>{copied ? (language === 'mr' ? 'कॉपी झाली' : 'Copied') : (language === 'mr' ? 'WhatsApp शेअर' : 'WhatsApp Share')}</span>
+                <span className="hidden sm:inline">{copied ? (language === 'mr' ? 'कॉपी झाली' : 'Copied') : (language === 'mr' ? 'WhatsApp शेअर' : 'WhatsApp Share')}</span>
+                <span className="sm:hidden">{copied ? '✓' : 'Share'}</span>
               </button>
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl transition-colors shadow-xs"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs font-black bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl transition-colors shadow-xs cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>{t.printReceipt}</span>
+                <span className="hidden sm:inline">{t.printReceipt}</span>
+                <span className="sm:hidden">Print</span>
               </button>
               <button
                 onClick={onClose}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors ml-1"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
@@ -122,7 +124,7 @@ We are deeply grateful for your generous contribution!`;
           </div>
 
           {/* Printable Receipt Paper Container */}
-          <div className="p-4 sm:p-6 md:p-8 bg-amber-50/40">
+          <div className="p-3 sm:p-6 md:p-8 bg-amber-50/40 overflow-y-auto flex-1">
             <div
               ref={receiptRef}
               id="printable-receipt-card"

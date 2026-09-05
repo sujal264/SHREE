@@ -345,9 +345,97 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({ onOpenExpenseModal }
         </div>
       </div>
 
-      {/* Expenses Data Table */}
+      {/* Expenses Data Table & Mobile Cards */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile View: High-contrast touch-friendly Cards (Hidden on md+) */}
+        <div className="block md:hidden divide-y divide-slate-100">
+          {filteredExpenses.length > 0 ? (
+            filteredExpenses.map(e => {
+              const badge = getCategoryBadgeColor(e.category);
+              return (
+                <div key={`mobile-${e.id}`} className="p-4 space-y-2.5 hover:bg-rose-50/20 transition-colors">
+                  {/* Header: Date & Amount */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {formatDateLocal(e.date)}
+                    </span>
+                    <span className="font-black text-rose-700 text-base">
+                      -{formatINR(e.amount)}
+                    </span>
+                  </div>
+
+                  {/* Title & Category */}
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm leading-snug">{e.title}</h3>
+                    {e.notes && (
+                      <p className="text-[11px] text-slate-500 italic mt-0.5">"{e.notes}"</p>
+                    )}
+                    <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                      <span className={`px-2 py-0.5 font-bold rounded-md text-[10px] ${badge.bg} ${badge.text} ${badge.border}`}>
+                        {getExpenseCategoryLabel(e.category)}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                        {getPaymentMethodLabel(e.paymentMethod)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mobile Actions Bar */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                    <div>
+                      {e.receiptFileUrl ? (
+                        <button
+                          onClick={() =>
+                            setPreviewReceiptFile({
+                              url: e.receiptFileUrl!,
+                              name: e.receiptFileName || e.title,
+                            })
+                          }
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>{language === 'mr' ? 'बिल पहा' : 'View Bill'}</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">बिल जोडलेले नाही</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {canEdit && (
+                        <>
+                          <button
+                            onClick={() => onOpenExpenseModal(e)}
+                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                            title={t.edit}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setSelectedExpenseForDelete(e)}
+                            className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                            title={t.delete}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-8 text-center text-slate-400">
+              <p className="text-xs font-bold">
+                {language === 'mr' ? 'या निकषाशी जुळणारा खर्च आढळला नाही.' : 'No expenses found for this filter.'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View: Full Table (Hidden on mobile) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs font-['Mukta',sans-serif]">
             <thead className="bg-slate-50/90 text-slate-600 font-black uppercase tracking-wider border-b border-slate-200">
               <tr>

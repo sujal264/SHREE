@@ -356,9 +356,112 @@ export const DonationsView: React.FC<DonationsViewProps> = ({ onOpenDonationModa
         </div>
       </div>
 
-      {/* Donations Data Table */}
+      {/* Donations Data Table & Mobile Cards */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile View: High-contrast touch-friendly Cards (Hidden on md+) */}
+        <div className="block md:hidden divide-y divide-slate-100">
+          {filteredDonations.length > 0 ? (
+            filteredDonations.map(d => (
+              <div key={`mobile-${d.id}`} className="p-4 space-y-2.5 hover:bg-amber-50/20 transition-colors">
+                {/* Header: Receipt # & Amount */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-black text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-md text-xs border border-amber-300/80">
+                      #{d.receiptNumber}
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {formatDateLocal(d.date)}
+                    </span>
+                  </div>
+                  <span className="font-black text-emerald-700 text-base">
+                    +{formatINR(d.amount)}
+                  </span>
+                </div>
+
+                {/* Donor Name & Category */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">{d.donorName}</h3>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                        {d.category === 'Other' ? (language === 'mr' ? 'इतर' : 'Other') : (language === 'mr' ? 'सर्वसाधारण' : 'General')}
+                      </span>
+                      {d.status === 'Received' ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                          ✓ {language === 'mr' ? 'जमा' : 'Received'}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
+                          ⏳ {language === 'mr' ? 'प्रलंबित' : 'Pending'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Action Buttons Bar */}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                  <button
+                    onClick={() => openReceiptModal(d)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-xl text-xs font-bold border border-amber-200 cursor-pointer"
+                  >
+                    <Receipt className="w-3.5 h-3.5 text-amber-700" />
+                    <span>{language === 'mr' ? 'पावती पहा / शेअर' : 'Receipt / Share'}</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    <select
+                      id={`mobile-status-select-${d.receiptNumber}`}
+                      value={d.status}
+                      onChange={e => {
+                        const newStatus = e.target.value as DonationStatus;
+                        if (newStatus === d.status) return;
+                        setStatusConfirmState({
+                          donation: d,
+                          targetStatus: newStatus,
+                          receivedDate: d.receivedDate || getTodayDateString(),
+                        });
+                      }}
+                      className="text-[11px] font-bold rounded-lg px-2 py-1 bg-slate-100 border border-slate-200 text-slate-700"
+                    >
+                      <option value="Pending">⏳ {t.statusPending}</option>
+                      <option value="Received">✓ {t.statusReceived}</option>
+                      <option value="Cancelled">✕ {t.statusCancelled}</option>
+                    </select>
+
+                    {canEdit && (
+                      <>
+                        <button
+                          onClick={() => onOpenDonationModal(d)}
+                          className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                          title={t.edit}
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setSelectedDonationForDelete(d)}
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"
+                          title={t.delete}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-8 text-center text-slate-400">
+              <p className="text-xs font-bold">
+                {language === 'mr' ? 'या निकषाशी जुळणारी जमा पावती आढळली नाही.' : 'No donation receipts found for this filter.'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View: Full Table (Hidden on mobile) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs font-['Mukta',sans-serif]">
             <thead className="bg-slate-50/90 text-slate-600 font-black uppercase tracking-wider border-b border-slate-200">
               <tr>

@@ -175,30 +175,28 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden my-8 border border-slate-200"
+          className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col border border-slate-200"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-rose-700 to-rose-600 text-white">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-rose-700 to-rose-600 text-white shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold text-xl shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg sm:text-xl shrink-0">
                 🧾
               </div>
               <div>
-                <h3 className="text-base font-black tracking-tight">
+                <h3 className="text-sm sm:text-base font-black tracking-tight">
                   {targetExpense
-                    ? (language === 'mr' ? 'खर्च नोंद दुरुस्त करा' : 'Edit Expense Record')
-                    : (language === 'mr' ? 'नवीन खर्च नोंदवा' : 'New Expense Entry')}
+                    ? (language === 'mr' ? 'खर्च नोंद संपादित करा' : 'Edit Expense Voucher')
+                    : (language === 'mr' ? 'नवीन खर्च नोंदवा' : 'New Expense Voucher')}
                 </h3>
-                <p className="text-xs text-rose-100 font-medium">
-                  {targetExpense
-                    ? (language === 'mr' ? 'खर्चाचा हिशोब व रक्कम बदलत आहे' : 'Update details and vendor bill information')
-                    : (language === 'mr' ? 'मंडळाचा खर्च नोंदवा व शिल्लक रकमेचा थेट हिशोब ठेवा' : 'Track expenditure and deduct automatically from available balance')}
+                <p className="text-[11px] sm:text-xs text-rose-100 font-medium">
+                  {language === 'mr' ? 'मंडळ अधिकृत पावती/व्हाउचर नोंद' : 'Official mandal expense ledger voucher'}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-rose-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-rose-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>

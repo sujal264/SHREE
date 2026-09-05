@@ -20,11 +20,8 @@ export interface DbStatusResponse {
 
 export class ApiClient {
   private getHeaders(role?: string): HeadersInit {
-    const currentRole = role || localStorage.getItem('gu_current_role_v1') || 'admin';
-    let token = localStorage.getItem('gu_auth_token_v2') || '';
-    if (!token && currentRole === 'admin') {
-      token = 'gu_admin_sess_2026_shree_sai';
-    }
+    const currentRole = role || localStorage.getItem('gu_current_role_v1') || 'viewer';
+    const token = localStorage.getItem('gu_auth_token_v2') || '';
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'x-user-role': currentRole,

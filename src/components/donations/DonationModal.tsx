@@ -134,34 +134,34 @@ export const DonationModal: React.FC<DonationModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden my-8 border border-slate-200"
+          className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col border border-slate-200"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold text-xl shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg sm:text-xl shrink-0">
                 🪔
               </div>
               <div>
-                <h3 className="text-base font-black tracking-tight">
+                <h3 className="text-sm sm:text-base font-black tracking-tight">
                   {targetDonation
                     ? (language === 'mr' ? 'जमा पावती दुरुस्त करा' : 'Edit Donation Receipt')
                     : (language === 'mr' ? 'नवीन जमा पावती नोंदवा' : 'New Donation Entry')}
                 </h3>
-                <p className="text-xs text-amber-100 font-medium">
+                <p className="text-[11px] sm:text-xs text-amber-100 font-medium">
                   {language === 'mr' ? 'पावती क्र.' : 'Receipt #'}: {receiptNumber || nextReceiptNumber}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-amber-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-amber-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
             {/* Row 1: Manual Receipt Number & Amount */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-start">
               {/* Receipt Number (Manual & Editable) */}
